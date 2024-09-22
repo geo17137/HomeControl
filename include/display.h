@@ -1,6 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 #include <Arduino.h>
+#include "const.h"
 #include <LiquidCrystal_I2C.h>
 #include "mtr86.h"
 

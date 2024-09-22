@@ -28,6 +28,16 @@
 #include "local_loop.h"
 #include "const.h"
 
+#include "../secret/password.h"
+
+const char *mqttServer = MQTT_SERVER;
+const int  mqttPort = MQTT_PORT;
+const char *mqttUser = MQTT_USER;
+const char *mqttPassword = MQTT_PASSWORD;
+const char *ssid = SSId;
+const char *password = PASSWORD;
+const char *hostname = HOSTNAME;
+
 WiFiClient wifiClient;
 
 #ifdef TIME_SIMULATOR

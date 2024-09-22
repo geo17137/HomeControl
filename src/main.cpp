@@ -383,16 +383,16 @@ void initWifiStation() {
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
 
-  WiFi.begin(SSId, PASSWD);
+  WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("Wifi %s not connected! Rebooting...", SSId);
+    Serial.printf("Wifi %s not connected! Rebooting...", ssid);
 #ifndef IO_DEBUG    
     backLightOff();
 #endif    
     delay(5000);
     ESP.restart();
   }
-  WiFi.setHostname(HOSTNAME);
+  WiFi.setHostname(hostname);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
@@ -412,17 +412,17 @@ void initWifiStation() {
 
 void initMQTTClient() {
   // Connecting to MQTT server
-  mqttClient.setServer(MQTT_SERVER, PORT);
+  mqttClient.setServer(mqttServer, mqttPort);
   mqttClient.setBufferSize(MQTT_MAX_BUFFER_SIZE);
   mqttClient.setCallback(PubSubCallback);
 
   while (!mqttClient.connected()) {
-    Serial.println(String("Connecting to MQTT (") + MQTT_SERVER + ")...");
+    Serial.println(String("Connecting to MQTT (") + mqttServer + ")...");
     // Pour un même courtier les clients doivent avoir un id différent
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
     // Serial.println(clientId);
-    if (mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD)) {
+    if (mqttClient.connect(clientId.c_str(), mqttUser, mqttPassword)) {
       Serial.println("MQTT client connected");
     }
     else {

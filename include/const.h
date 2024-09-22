@@ -1,16 +1,5 @@
 #ifndef CONST_H
 #define CONST_H
-#include "../secret/password.h"
-
-//------------------------------------
-// Contenu de password.h
-// #define SSId     "xxxxxxx"
-// #define PASSWD    "xxxxxxxxx"
-// #define MQTT_SERVER "xxxxxx"
-// #define PORT xxxx
-// #define MQTT_USER "xxxx"
-// #define MQTT_PASSWORD "xxxxxxxx"
-//------------------------------------
 
 const String version = "2024.9.20";
 
@@ -104,8 +93,6 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #else
 #define INTERVAL_SCHEDULE 60*1000
 #endif
-
-#define HOSTNAME "Automate_Esp32"
 
 //----------------------------
 // Modes de fonctionnement VMC
@@ -202,6 +189,12 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 // Caractéristiques affichage
 const int lcdColumns = 20;
 const int lcdRows = 4;
+#define LCD_SPACE_SYMBOL 0x20 //space symbol from LCD ROM, see p.9 of GDM2004D datasheet
+#define COLUMS           20   //LCD columns
+#define ROWS             4    //LCD rows
+// Position de l'affichage RSSI
+#define RSSI_ROWS_POS   0
+#define RSSI_COLUMS_POS 17
 
 // Ports non utilisés
 // programmés en sortie
@@ -399,15 +392,6 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
 // Taille en octet d'une plage
 // "0:00:00:00:00:"
 #define TAILLE_PLAGE 14
-
-// Afficheur LCD
-#define LCD_SPACE_SYMBOL 0x20 //space symbol from LCD ROM, see p.9 of GDM2004D datasheet
-
-#define COLUMS           20   //LCD columns
-#define ROWS             4    //LCD rows
-// Position de l'affichage RSSI
-#define RSSI_ROWS_POS   0
-#define RSSI_COLUMS_POS 17
 
 // Messages dans local_loop
 #define SUPRESSOR_FILLING   "FILL SUPRESSOR."

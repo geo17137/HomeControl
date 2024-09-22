@@ -1,5 +1,4 @@
 #include <arduino.h>
-#include "const.h"
 #include "display.h"
 
 /**
