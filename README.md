@@ -24,6 +24,7 @@ https://github.com/geo17137/HomeControlAndroidFrontEnd
 Périphériques déportés<br>
 -------------------------<br>
 Commande PAC<br>
+https://github.com/geo17137/MitsubishiPAC_IR<br>
 https://fr.aliexpress.com/item/1005005777409596.html?spm=a2g0o.order_list.order_list_main.247.15e75e5bc2Vkbf&gatewayAdapt=glo2fra
 
 Commande lent/rapide VMC<br>
