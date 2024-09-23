@@ -6,6 +6,9 @@ Pilotage d'une maison connectée: composition
 - une commande de plaques et four de cuisson
 - le pilotage d'une PAC
 
+<br>L'application est pilotée par une application Android<br>
+https://github.com/geo17137/HomeControlFrontEnd
+
 Plan de la distribution d'eau<br>
 https://github.com/geo17137/HomeControl/blob/master/DocsPdf/Plan%20distribution%20eau.pdf
 
