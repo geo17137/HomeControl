@@ -1,5 +1,5 @@
 Pilotage d'une maison connectée<br>
-----------------------------------<br><br>
+-------------------------------------<br><br>
 Equipements pilotés:
 - un premier système d'irrigation composé d'un réservoir de 200L rempli par un puit
 - une commande de lance d'arrosage
@@ -34,7 +34,7 @@ https://github.com/geo17137/HomeControl/blob/master/DocsPdf/CablageES32A08.pdf
 https://github.com/geo17137/HomeControl/blob/master/DocsPdf/DocGeneraleHomeControl.pdf
 
 Codes et equipements annexes déportés<br>
------------------------------------------<br>
+--------------------------------------------<br>
 - Application Android<br>
 https://github.com/geo17137/HomeControlAndroidFrontEnd
 
@@ -42,7 +42,7 @@ Périphériques déportés<br>
 -------------------------<br>
 - Commande PAC<br>
 https://github.com/geo17137/MitsubishiPAC_IR<br>
-- Carte de commande
+- Carte de commande<br>
 https://fr.aliexpress.com/item/1005005777409596.html?spm=a2g0o.order_list.order_list_main.247.15e75e5bc2Vkbf&gatewayAdapt=glo2fra
 
 - Commande VMC rapide<br>
