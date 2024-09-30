@@ -1243,6 +1243,7 @@ void loop() {
 
   if (millis() - tpsProg > INTERVAL_PORT_READ) {
     tpsProg = millis();
+
     // Lire tous les ports de sortie
     // Ne mettre à jour que si changement
     char* portOut_0 = readPortIo_O();
@@ -1302,8 +1303,8 @@ void loop() {
  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
     tpsWifiSignalStreng = millis();
     long rssi = WiFi.RSSI();
-    mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     sprintf(rssi_buffer, "RSSI:%d", rssi);
+    mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     if (!isLcdDisplayOn)
       return;
     lcdPrintRssi(&rssi_buffer[5]);

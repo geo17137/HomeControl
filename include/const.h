@@ -5,7 +5,7 @@ const String version = "2024.9.20";
 
 // #define IO_TEST
 #define FORCE_DISPLAY
-// #define PRODUC_DEVICE
+#define PRODUC_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
 #ifdef  PRODUC_DEVICE
