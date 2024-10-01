@@ -397,12 +397,12 @@ void initWifiStation() {
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   initOTA();
-  sprintf(buffer, "SSID : %s", WiFi.SSID());
+  sprintf(buffer, "SSID : %s", WiFi.SSID().c_str());
 #ifndef IO_DEBUG    
   lcdPrintString(buffer, 1, 0, true);
 #endif
   Serial.println(buffer);
-  sprintf(buffer, "IP : %s", WiFi.localIP().toString());
+  sprintf(buffer, "IP : %s", WiFi.localIP().toString().c_str());
   Serial.println(buffer);
 #ifndef IO_DEBUG    
   lcdPrintString(buffer, 2, 0, true);
@@ -507,7 +507,7 @@ void setup() {
   initDisplay();
   display = ioDisplay;
 
-  sprintf(buffer, "HomeCtrl v%s", version);
+  sprintf(buffer, "HomeCtrl v%s", version.c_str());
   Serial.println(buffer);
   lcdPrintString(buffer, 0, 0, true);
   delay(500);
@@ -605,7 +605,7 @@ ItemParam item = cParam->get(IRRIGATION, 0);
 jours = item.MMax;
 
 long rssi = WiFi.RSSI();
-sprintf(rssi_buffer, "RSSI:%d", rssi);
+sprintf(rssi_buffer, "RSSI:%ld", rssi);
 // item.print();
 // Test de mémorisation de la variable persistante jour
 // item.MMax = 2;
@@ -1303,7 +1303,7 @@ void loop() {
  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
     tpsWifiSignalStreng = millis();
     long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%d", rssi);
+    sprintf(rssi_buffer, "RSSI:%ld", rssi);
     mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     if (!isLcdDisplayOn)
       return;
@@ -1401,7 +1401,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     char str[4];
     // unsigned arrosage = itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut);
     // gpioRead(O_EV_ARROSAGE);
-    sprintf(tabValue, "%s;%s;%s;%d;%d;%s",
+    sprintf(tabValue, "%s;%s;%s;%u;%d;%s",
       itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),
       gpioRead(O_EV_IRRIGATION),
       gpioRead(O_FOUR),
@@ -1558,7 +1558,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_GET_VERSION ----------------------
   if (cmp(topic, TOPIC_GET_VERSION)) {
     long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%d", rssi);
+    sprintf(rssi_buffer, "RSSI:%ld", rssi);
     String info = version + "\n" + WiFi.localIP().toString() + ", " + rssi_buffer + "db\n" + String(getDate());
     // Serial.println(info);
     mqttClient.publish(TOPIC_READ_VERSION, info.c_str());

@@ -17,6 +17,7 @@ class ItemParam {
 
 public:
   ItemParam() {
+    HMax = HMin = MMax = MMin = enable = 0;
   }
   void print();
 };
