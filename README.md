@@ -7,6 +7,7 @@ Equipements pilotés:
 - une VMC avec marche lente/rapide
 - des équipements de cuisine (plaques, four, micro-ondes)
 - une PAC<br>
+L'ensemble communique également avec Home Assistant via des messages MQTT
 
 Système de commande:<br>
 - Carte electonique ES32A08<br>
@@ -16,7 +17,13 @@ https://fr.aliexpress.com/item/1005006185382987.html?spm=a2g0o.productlist.main.
   La marche rapide de la VMC est effectué par un système déporté (voir plus loin)<br>
 <br>  
 - Pilotage<br>
+  La carte ES32A08 est accédée par une application Android via des messages MQTT par l'intermediaire
+  d'un courtier Mosquito tournant dans Home Assistant.
+  Nota : le courtier MQTT peut également être fourni par un esp32 ou un Raspberry PI.
+  Il est possible de programmer la carte ES32A08 avec tout systeme permettant d'envoyer des messages MQTT
+  
   Application Android<br>
+
 https://github.com/geo17137/HomeControlFrontEnd
 <br><br>
 Plans<br>
