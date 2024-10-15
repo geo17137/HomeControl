@@ -947,6 +947,7 @@ void schedule() {
             filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif
             off(O_FOUR);
+            mqttClient.publish(TOPIC_STATUS_CUISINE, "off"); 
           }
           break;
 
@@ -1450,10 +1451,15 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     cPersistantParam->set(POWER_COOK, cmd);
     filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif  
-    if (cmd)
+    if (cmd==1) {
       on(O_FOUR);
-    else
+      mqttClient.publish(TOPIC_STATUS_CUISINE, "on");      
+    }
+
+    else  if (cmd==0){
       off(O_FOUR);
+      mqttClient.publish(TOPIC_STATUS_CUISINE, "off");   
+    }
     return;
   }
   //------------------  TOPIC_CMD_VMC ----------------------

@@ -29,7 +29,16 @@
 #include "const.h"
 
 #include "../secret/password.h"
-
+/*
+secret/password.h
+#define SSId "xxxxxxx"
+#define PASSWORD    "xxxxxxx"
+#define MQTT_SERVER "XXX.XXX.XXXX.XXX"
+#define MQTT_PORT xxxx
+#define MQTT_USER "xxxxxxxx"
+#define MQTT_PASSWORD "xxxxxxxxxx"
+#define HOSTNAME  "xxxxxxxxxx"
+*/
 const char *mqttServer = MQTT_SERVER;
 const int  mqttPort = MQTT_PORT;
 const char *mqttUser = MQTT_USER;

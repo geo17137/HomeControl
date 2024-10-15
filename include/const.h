@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2024.10.1";
+const String version = "2024.10.15";
 
 // #define IO_TEST
 #define FORCE_DISPLAY
@@ -240,7 +240,7 @@ const int lcdRows = 4;
 #define TOPIC_GLOBAL_SCHED   TOPIC_PREFIX  "homecontrol/global_sched" 
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
-
+#define TOPIC_STATUS_CUISINE TOPIC_PREFIX "homecontrol/cuisine_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
 #define SUB_GPIO0_ACTION                   "circuit2/action"
 
