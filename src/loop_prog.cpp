@@ -5,7 +5,9 @@
   L'IHM en local est réalisée à l'aide d'un afficheur LCD 20x4
   https://fr.aliexpress.com/w/wholesale-20x4-lcd-arduino.html
   équipé d'un interface I2C
-  et d'un encodeur rotatif dont l'axe  vertical est possède un contact on/off
+  et d'un encodeur rotatif dont l'axe  vertical est possède un contact on/off permettant
+  des commandes de type single clic ou double clic. La détection des clics et faite
+  par interruption (ISR)
 
   L'interface lcd et le bouton rotary permettent de réaliser toutes les actions faites depuis
   un smartphone sauf la programmation des tâches horaires.
@@ -21,6 +23,7 @@
   L'affichage sur l'écran LCD doit se faire dans un contexte d'execution hors ISR
   du fait de la communication avec l'interface de l'écran utilisant le protocole I2C.
   Les échanges avec ce protoloce sont sous interruptions.
+  Ceci interdit d'utiliser l'afficheur LCD dans les fonctions déclanchées par un clic.
 
   Choix des opérations à exécuter affichées sur l'écran LCD:
   Les opérations sont choisies par un encodeur rotatif.
@@ -35,8 +38,12 @@
   Suivant le type d'appuy, les fonctions pointées par onSingleClick ou onDoubleClick sont appelées.
   Le contexte d'execution de ces fonctions est dans une ISR, interdisant l'utilisation directe de l'afficheur LCD.
   (à cause du protocole I2C sous ISR utilisé pour communiquer avec l'afficheur).
-  Les fonctions appelées initialisent des pointeurs de fonction sur la tâche à exécuter, puis met en place
-  un crochet utilisés dans loop, ce crochet permet un changement de contexte et appele les pointeurs de fonctions initialisés. 
+  Pour permettre l'utilisation de l'afficheur LCD il est necessaire d'effectuer un changement de contexte IRS->loop
+  Le changement de contexte est effectué de façon suivante:
+  Les fonctions appelées initialisent des pointeurs de fonction sur la tâche à exécuter, puis mettent en place
+  un crochet appelé dans loop. 
+  Ce crochet permet un changement de contexte et appele les fonctions via les pointeurs de fonctions initialisés
+  dans l'ISR. 
   
   // Dans loop
       onLoopTic();  // le crochet 
@@ -98,7 +105,7 @@
 
   Nota :
   Pour exécuter des fonctions diverses (avec passage de paramètre) sur le même appel de fonction onRotary,
-  on utilise mécanisme (sans necessiter de crochet dans loop [onRotary est hors isr])
+  on utilise le même mécanisme (sans necessiter de crochet dans loop [onRotary est hors isr])
   Il suffit de faire pointer onRotary sur différentes fonction suivant les besoins
 */
 

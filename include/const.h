@@ -4,7 +4,7 @@
 const String version = "2024.10.15";
 
 // #define IO_TEST
-#define FORCE_DISPLAY
+// #define FORCE_DISPLAY
 #define PRODUC_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
@@ -141,7 +141,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define O_EV_ARROSAGE    16
 #endif
 
-//-----------------------
+//------------------------------
 //    Sorties commande HCT74165
 #ifdef ES32A08
 //------CLK_165-----------------
@@ -240,7 +240,7 @@ const int lcdRows = 4;
 #define TOPIC_GLOBAL_SCHED   TOPIC_PREFIX  "homecontrol/global_sched" 
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
-#define TOPIC_STATUS_CUISINE TOPIC_PREFIX "homecontrol/cuisine_status"
+#define TOPIC_STATUS_CUISINE TOPIC_PREFIX  "homecontrol/cuisine_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
 #define SUB_GPIO0_ACTION                   "circuit2/action"
 
@@ -295,7 +295,7 @@ const int lcdRows = 4;
 
 // Contenu du fichier GLOBAL_SCHEDULED_PARAM_FILE_NAME (par défaut)
 // Programmation activée par défaut
-// #define DEFAUT_GLOBAL_SCHEDULED_PARAM "1:1:1:1:1"
+// #define DEFAUT_GLOBAL_SCHEDULED_PARAM "1:1:1:1:1:1"
 // Indice des dispositifs associés aux paramètres
 #define POWER_COOK 0
 #define IRRIGATION 1
@@ -334,7 +334,7 @@ const int lcdRows = 4;
 
 /*
   Format des paramètres des cycles programmés sur 24H
-  Une ligne = un dispositif avec trois plages de commande
+  Une ligne = un dispositif avec quatre plages de commande de format
   auto:h_min:m_min:h_max:m_max: N_PLAGE x
   Chaque plages comporte 5 items
   auto : "1" programmé, "0" non programmé ("2" pour la commande pleine vitesse VMC)
@@ -360,7 +360,7 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
   POWER_COOK :  h_min, m_min pour toutes les plages (3 plages utilisées)
   IRRIGATION :  h_max -> intervalle ouverture circuit2 (irrigation tomates), m_max -> jour courant (plage 0 uniquement) (3 plages utilisées)
   VANNE_EST  :  tout les champs sont utilisés (3 plages utilisées)
-  PAC        :  tout les champs sont utilisés (3 plages utilisées) (1 plage utilisée)
+  PAC        :  tout les champs sont utilisés (1 plage utilisée)
   VMC        :  tout les champs sont utilisés (toutes les plages utilisées)
 
   La programmation des actions est faite toute les minutes dans schedule()
@@ -393,7 +393,7 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
 // "0:00:00:00:00:"
 #define TAILLE_PLAGE 14
 
-// Messages dans local_loop
+// Messages utilisés dans local_loop
 #define SUPRESSOR_FILLING   "FILL SUPRESSOR."
 #define WAIT                "WAIT"
 #define SEE_NOTICE          "SEE NOTICE"

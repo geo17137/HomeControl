@@ -58,6 +58,8 @@
    Version 2024.9.20
       regroupement des messages lcd
       correction bug mineurs 
+   Version 2024.10.15
+      envoi de message on/off homecontrol/status_cuisine lors des commandes 
 */
 #include "main.h"
 #include "io.h"
@@ -434,7 +436,7 @@ void initMQTTClient() {
       delay(5000);
     }
   }
-    mqttConnect = true;
+  mqttConnect = true;
   // Déclare Pub/Sub topics
   mqttClient.subscribe(TOPIC_GET_PARAM);
   mqttClient.subscribe(TOPIC_WRITE_PARAM);
@@ -1022,9 +1024,9 @@ void startWatering(int timeout) {
   else
     wateringNoTimeOut = 2;
   isWatering = true;
-  on(O_POMPE);
   on(O_TRANSFO);
   on(O_EV_ARROSAGE);
+  on(O_POMPE);
 }
 /**
  * @brief  Arrêt arrosage
@@ -1060,10 +1062,9 @@ void startTankFilling() {
     isWatering = false;
   }
   else {
-    on(O_POMPE);
     on(O_TRANSFO);
     on(O_EV_IRRIGATION);
-  }
+    on(O_POMPE);  }
 }
 /**
  *@brief Arrêt remplissage réservoir
@@ -1196,21 +1197,9 @@ void loop() {
     mqttConnect = false;
     mqttClient.publish(TOPIC_MQTT_TEST, "");
   }
-  // static long tpstest = 0;
-  // // Reset du chien de garde
-  // if (millis() - tpstest > 5000) {
-  //   static boolean b;
-  //     tpstest = millis();
-  //   if (b)
-  //     mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "on");
-  //   else
-  //     mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
-  //   b = !b;
-  // }
-
-// #ifdef XXX
-  if (millis() - tpsWifiTest > INTERVAL_WIFI_TEST) {
-    tpsWifiTest = millis();
+ 
+//  if (millis() - tpsWifiTest > INTERVAL_WIFI_TEST) {
+//    tpsWifiTest = millis();
     // Test conx WiFi  
     // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     //   WiFi.reconnect();
@@ -1232,9 +1221,7 @@ void loop() {
     // if (!mqttClient.connected()) {
     //   initMQTTClient();
     // }
-
-  }
-  // #endif
+  //}
 
   // Scruter les ports E/S toutes les s pour afficher sur lcd
   // La mise à jour de l'affichage uniquemment sur nouvel état des
@@ -1291,7 +1278,6 @@ void loop() {
   if (irSendOn && (millis() - tpsIr > INTERVAL_IR_SEND)) {
     tpsIr = millis();
     mqttClient.publish(TOPIC_PAC_IR_OFF, "");
-    // Serial.println( TOPIC_PAC_IR_OFF);
   }
 
   // Appel de schedule toutes les minutes
@@ -1318,12 +1304,6 @@ void loop() {
   time_exec_stop();
 #endif
 }
-
-/*
-  Réception des messages MQTT
-  Attention si le buffer MQTT est trop petit le message correspondant est
-  supprimé. Voir commantaire en-tête de ce fichier
-*/
 
 /**
  *@brief  Réception des messages MQTT
