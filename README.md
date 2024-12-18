@@ -32,7 +32,7 @@ Plans<br>
 https://github.com/geo17137/HomeControl/blob/master/DocsPdf/Plan%20distribution%20eau.pdf
 
 - Câblage armoire de commande<br>
-https://github.com/geo17137/HomeControl/blob/master/DocsPdf/Plan%20de%20cablage%20armoire%20automate%20ESP32%20-%20V5.pdf
+https://github.com/geo17137/HomeControl/blob/master/DocsPdf/Plan%20de%20cablage%20armoire%20automate%20ESP32%20-%20V6.pdf
 
 - Câblage carte de commande<br>
 https://github.com/geo17137/HomeControl/blob/master/DocsPdf/CablageES32A08.pdf
