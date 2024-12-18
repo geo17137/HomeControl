@@ -634,7 +634,10 @@ void monoCmdVmcBoard(TimerHandle_t xTimer) {
   print("start board\n", OUTPUT_PRINT);
 #endif
   t_stop(tache_t_cmdVmcBoard);
-  mqttClient.publish(VMC_BOARD_ACTION, S_ON);
+   if (vmcFast) 
+    mqttClient.publish(VMC_BOARD_ACTION, S_ON);
+   else
+    mqttClient.publish(VMC_BOARD_ACTION, S_OFF);
 }
 
 /*
@@ -1125,6 +1128,7 @@ void setVmc(int cmd) {
       on(O_VMC);
       vmcFast = false;
       vmcMode = VMC_PROG_ON;
+      t_start(tache_t_cmdVmcBoard);
       break;
     case 2:
       on(O_VMC);
@@ -1148,6 +1152,7 @@ void setVmc(int cmd) {
     on(O_VMC);
     vmcFast = false;
     vmcMode = VMC_ON;
+    t_start(tache_t_cmdVmcBoard);
     break;
   }
 }
