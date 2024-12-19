@@ -1,7 +1,7 @@
 #ifndef ROTARY_ENCODER_H
 #define ROTARY_ENCODER_H
 #include "AiEsp32RotaryEncoder.h"
-#include "oneButton.h"
+#include "OneButton.h"
 #include "const.h"
 
 #ifdef ES32A08
