@@ -1,3 +1,4 @@
+
 /*
    Automate remplaçant le ZELIO
    ******************************************************
@@ -60,6 +61,8 @@
       correction bug mineurs 
    Version 2024.10.15
       envoi de message on/off homecontrol/status_cuisine lors des commandes 
+   Version 2024.12.31
+       modification monostable commande vmc    
 */
 #include "main.h"
 #include "io.h"
@@ -117,7 +120,7 @@ const char* bootRaison() {
   esp_reset_reason_t reason = esp_reset_reason();
   switch (reason) {
   case ESP_RST_UNKNOWN:
-    return "Reset indeterminé";
+    return "Reset unknown";
     break;
   case ESP_RST_POWERON:
     return "Reset power-on";
@@ -532,7 +535,6 @@ void setup() {
   logsWrite(bootRaison());
   // Serial.println(strlen(cParam->getStr()));
   // cParam->print();
-  // int val = cParam->get(VANNE_EST, 3).HMin;
 
 #ifdef  WEB_SERIAL
   WebSerial.begin(&server);
@@ -580,7 +582,6 @@ void setup() {
 #ifdef PERSISTANT_PAC
   if (!cPersistantParam->get(PAC)) {
     off(O_PAC);
-    // t_start(tache_t_monoPacOff);
   }
   else {
     on(O_PAC);
@@ -634,9 +635,9 @@ void monoCmdVmcBoard(TimerHandle_t xTimer) {
   print("start board\n", OUTPUT_PRINT);
 #endif
   t_stop(tache_t_cmdVmcBoard);
-   if (vmcFast) 
+  if (vmcFast) 
     mqttClient.publish(VMC_BOARD_ACTION, S_ON);
-   else
+  else
     mqttClient.publish(VMC_BOARD_ACTION, S_OFF);
 }
 
@@ -1128,7 +1129,6 @@ void setVmc(int cmd) {
       on(O_VMC);
       vmcFast = false;
       vmcMode = VMC_PROG_ON;
-      t_start(tache_t_cmdVmcBoard);
       break;
     case 2:
       on(O_VMC);
@@ -1152,7 +1152,6 @@ void setVmc(int cmd) {
     on(O_VMC);
     vmcFast = false;
     vmcMode = VMC_ON;
-    t_start(tache_t_cmdVmcBoard);
     break;
   }
 }
@@ -1245,7 +1244,7 @@ void loop() {
       display();
     }
     // Lire tous les ports de d'entrée
-    // Ne mettre à jour que si changement
+    // Ne mettre à jour que si changement d'état
     char* portsIn_0 = readPortIo_I();
     if (strcmp(portsIn_1, portsIn_0) != 0) {
       strcpy(portsIn_1, portsIn_0);
@@ -1274,7 +1273,7 @@ void loop() {
     tpsRotary = millis();
     rotary_loop();
     button.tick();
-    // Pointeurs de fonctions mis à jour en fonction du travail à exécuter
+    // Pointeurs de fonctions mis à jour en fonction des actions à exécuter
     onLoopTic();
     onLoopTic2();
   }
@@ -1495,7 +1494,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
 #endif
     }
     else {
-      // mettre la pac sous tension
+      // mettre la PAC sous tension
       irSendOn = false;
       on(O_PAC);
 #ifdef PERSISTANT_PAC

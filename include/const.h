@@ -1,10 +1,10 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2024.12.14";
+const String version = "2024.12.31";
 
 // #define IO_TEST
-// #define FORCE_DISPLAY
+//#define FORCE_DISPLAY
 #define PRODUC_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
