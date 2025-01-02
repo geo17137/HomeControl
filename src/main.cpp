@@ -1152,6 +1152,7 @@ void setVmc(int cmd) {
     on(O_VMC);
     vmcFast = false;
     vmcMode = VMC_ON;
+    t_start(tache_t_cmdVmcBoard);
     break;
   }
 }
