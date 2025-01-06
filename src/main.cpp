@@ -62,7 +62,9 @@
    Version 2024.10.15
       envoi de message on/off homecontrol/status_cuisine lors des commandes 
    Version 2024.12.31
-       modification monostable commande vmc    
+       modification monostable commande vmc  
+   Version 2025.01.04
+       optimisation de la fonction schedule           
 */
 #include "main.h"
 #include "io.h"
@@ -605,7 +607,7 @@ void setup() {
   // Persistance obligatoire pour ce paramètre
   // Utilisé par la vanne déportée arrosage des tomates
 ItemParam item = cParam->get(IRRIGATION, 0);
-jours = item.MMax;
+joursCircuit2 = item.MMax;
 
 long rssi = WiFi.RSSI();
 sprintf(rssi_buffer, "RSSI:%ld", rssi);
@@ -656,7 +658,8 @@ void monoPacOff(TimerHandle_t xTimer) {
 
 /*
  * Monostable mise en route de la PAC
- * La commande IR est envoyée après x secondes
+ * La commande IR est envoyée après x secondes via
+ * un dispositif déporté
  */
 void monoPacOn(TimerHandle_t xTimer) {
   static int count;
@@ -799,7 +802,7 @@ void offVanneEst() {
 /*
  * Exécuté toutes les minutes
  * Exécute les actions temporelles programmées
- * Appelé par loop (ne peut pas utiliser les timer RTOS (accès aux fichiers)
+ * Appelé par loop (on ne peut pas utiliser les timers RTOS (accès aux fichiers))
  */
 void schedule() {
   static boolean vmcBoardOn = false;
@@ -808,7 +811,6 @@ void schedule() {
   static boolean flagJours = false;
 
   ItemParam item;
-  char buffer[4];
 
 #ifdef DEBUG_HEAP
   Serial.printf("Free heap %x : min free heap %x\n", ESP.getFreeHeap(), ESP.getMinFreeHeap());
@@ -819,9 +821,9 @@ void schedule() {
   // Mise à jour du jours courant (persistant)
   if (h == 0 && !flagJours) {
     flagJours = true;
-    jours++;
+    joursCircuit2++;
     item = cParam->get(IRRIGATION, 0);
-    item.MMax = jours;
+    item.MMax = joursCircuit2;
     cParam->set(IRRIGATION, 0, item);
     cParam->updateStringParam(cParam->getStr());
     fileParam->writeFile(cParam->getStr(), "w");
@@ -829,7 +831,6 @@ void schedule() {
   if (h == 1 && flagJours) {
     flagJours = false;
   }
-
 #else  
   if (m++ == 60) {
     m = 0;
@@ -838,10 +839,15 @@ void schedule() {
   }
   // Serial.println(ESP.getFreeHeap());
   // Serial.println(ESP.getHeapSize());
+  Serial.printf("%02d:%02d\r", h, m);
 #endif
-  // Serial.printf("%02d:%02d\r", h, m);
 
   for (int deviceId = 0; deviceId < N_DEVICES; deviceId++) {
+    // Programmation autorisée pour ce device
+    if (!cGlobalScheduledParam->get(deviceId)) {
+      // Serial.printf("deviceId=%d\n", deviceId);
+      continue;
+    }
     for (int timeSet = 0; timeSet < N_PLAGES; timeSet++) {
       item = cParam->get(deviceId, timeSet);
       // -----------------------------------------------------------
@@ -853,27 +859,28 @@ void schedule() {
         item.print();
 #endif
         switch (deviceId) {
-
+        // Power cook ne comporte qu'une programmation d'arrêt, mise en route par commande manuelle
         case POWER_COOK:
           break;
 
-        case IRRIGATION:
-          if (cGlobalScheduledParam->get(deviceId)) {
+        case IRRIGATION: {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d startTankFilling..", h, m);
+            Serial.printf("%02d:%02d startTankFilling..\n", h, m);
 #endif    
             startTankFilling();
             // Gestion de la vanne du circuit 2 
+            // Circuit 2 est une vanne intallée sur le circuit d'arrosage des tomates
+            // et permet un arrossage non journalier
             // La périodicité en jour est mémorisée le champ libre item.HMax
             ItemParam item = cParam->get(IRRIGATION, 0);
             // Serial.printf("itemJ.HMax=%d, jours=%d\n", itemJ.HMax, jours);
             // Gestion de la commande déportée de la vanne gérant la période d'irrigation
             // non journalière
-            if (item.HMax >= jours) {
+            if (item.HMax >= joursCircuit2) {
               mqttClient.publish(SUB_GPIO0_ACTION, "on");
               // La coupure est programmée dans le dispositif distant
               // Reset du compte de jours
-              jours = 0;
+              joursCircuit2 = 0;
               // Mémorisation
               item.MMax = 0;
               cParam->set(IRRIGATION, 0, item);
@@ -886,50 +893,44 @@ void schedule() {
           break;
 
         case VANNE_EST:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d on(O_EV_EST)\n", h, m);
+          Serial.printf("%02d:%02d on(O_EV_EST)\n", h, m);
 #endif      
-            onVanneEst();
-          }
+          // La durée d'ouverture est gérée par un monostable
+          onVanneEst();
           break;
 
         case PAC:
-          if (cGlobalScheduledParam->get(deviceId)) {
-            // Serial.printf("%02d:%02d off(O_PAC)\n", h, m);
-            on(O_PAC);
+          // Serial.printf("%02d:%02d off(O_PAC)\n", h, m);
+          on(O_PAC);
 #ifdef PERSISTANT_PAC       
-            // Attention pas de timer
-            cPersistantParam->set(PAC, 1);
-            filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+          // Attention pas de timer
+          cPersistantParam->set(PAC, 1);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif           
-            t_start(tache_t_monoPacOn);
-          }
+          t_start(tache_t_monoPacOn);
           break;
 
         case VMC:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d, vmcMode=%d \n", h, m, vmcMode);
+          Serial.printf("%02d:%02d, vmcMode=%d \n", h, m, vmcMode);
 #endif
-            onVmc = 1;
-            if (item.enable == 2)
-              onVmc = 2;
-            switch (vmcMode) {
-            case VMC_STOP:
-            case VMC_ON_FAST:
-            case VMC_ON:
-              break;
-            default:
-              on(O_VMC);
-              vmcMode = VMC_PROG_ON;
-              if (onVmc == 2) {
-                vmcFast = true;
-                vmcMode = VMC_PROG_ON_FAST;
-                t_start(tache_t_cmdVmcBoard);
-              }
-              break;
+          onVmc = 1;
+          if (item.enable == 2)
+            onVmc = 2;
+          switch (vmcMode) {
+          case VMC_STOP:
+          case VMC_ON_FAST:
+          case VMC_ON: break;
+          default:
+            on(O_VMC);
+            vmcMode = VMC_PROG_ON;
+            if (onVmc == 2) {
+              vmcFast = true;
+              vmcMode = VMC_PROG_ON_FAST;
+              t_start(tache_t_cmdVmcBoard);
             }
+            break;
           }
           break;
         }
@@ -943,64 +944,58 @@ void schedule() {
         item.print();
 #endif
         switch (deviceId) {
+
         case POWER_COOK:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d off(O_FOUR)\n", h, m);
+          Serial.printf("%02d:%02d off(O_FOUR)\n", h, m);
 #endif
 #ifdef PERSISTANT_POWER_COOK            
-            cPersistantParam->set(POWER_COOK, 0);
-            filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+          cPersistantParam->set(POWER_COOK, 0);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif
-            off(O_FOUR);
-            mqttClient.publish(TOPIC_STATUS_CUISINE, "off"); 
-          }
+          off(O_FOUR);
+          mqttClient.publish(TOPIC_STATUS_CUISINE, "off"); 
           break;
-
+        // Remplissage du réservoir gérée par un monostable
         case IRRIGATION:
           break;
 
         case VANNE_EST:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d off(O_EV_EST)\n", h, m);
+          Serial.printf("%02d:%02d off(O_EV_EST)\n", h, m);
 #endif
-            offVanneEst();
-          }
+          offVanneEst();
           break;
 
         case PAC:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d PAC ON", h, m);
+          Serial.printf("%02d:%02d PAC ON", h, m);
 #endif
-            mqttClient.publish(TOPIC_PAC_IR_OFF, "");
-            irSendOn = true;
-            t_start(tache_t_monoPacOff);
+          mqttClient.publish(TOPIC_PAC_IR_OFF, "");
+          // Les commandes IR TOPIC_PAC_IR_OFF sont publiées dans loop
+          // isSendOn est mis à false dans monoPacOff
+          irSendOn = true; 
+          t_start(tache_t_monoPacOff);
 #ifdef PERSISTANT_PAC            
-            cPersistantParam->set(PAC, 0);
-            filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+          cPersistantParam->set(PAC, 0);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif
-          }
           break;
 
         case VMC:
-          if (cGlobalScheduledParam->get(deviceId)) {
 #ifdef DEBUG_OUTPUT_SCHEDULE
-            Serial.printf("%02d:%02d off(O_VMC)\n", h, m);
+          Serial.printf("%02d:%02d off(O_VMC)\n", h, m);
 #endif
-            onVmc = 0;
-            switch (vmcMode) {
-            case VMC_STOP:
-            case VMC_ON:
-            case VMC_ON_FAST:
-              break;
-            default:
-              off(O_VMC);
-              vmcFast = false;
-              vmcMode = VMC_PROG_OFF;
-              break;
-            }
+          onVmc = 0;
+          switch (vmcMode) {
+          case VMC_STOP:
+          case VMC_ON:
+          case VMC_ON_FAST: break;
+          default:
+            off(O_VMC);
+            vmcFast = false;
+            vmcMode = VMC_PROG_OFF;
+            break;
           }
           break;
         }
@@ -1340,7 +1335,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
 #endif
     // Modifier la chaine param pour refléter la valeur de jours courant
     ItemParam item = cParam->get(IRRIGATION, 0);
-    item.MMax = jours;
+    item.MMax = joursCircuit2;
     cParam->set(IRRIGATION, 0, item);
     cParam->updateStringParam(cParam->getStr());
     // cParam->print();

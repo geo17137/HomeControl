@@ -113,7 +113,7 @@ const char* MSG_OK = "set";
 
 // Jours courant pour la commande du circuit2 
 // Paramètre persistant
-static unsigned jours;
+static unsigned joursCircuit2;
 
 boolean isWatering;
 boolean isTankFilling;
