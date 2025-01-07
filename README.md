@@ -7,13 +7,13 @@ Equipements pilotés:
 - une VMC avec marche lente/rapide
 - des équipements de cuisine (plaques, four, micro-ondes)
 - une PAC<br>
-L'ensemble communique également avec Home Assistant via des messages MQTT
+L'ensemble communique également avec Home Assistant via des messages MQTT.
 
 Système de commande:<br>
-- Carte electonique ES32A08<br>
+- Carte electronique ES32A08<br>
 https://fr.aliexpress.com/item/1005006185382987.html?spm=a2g0o.productlist.main.1.698elv0Ylv0YwW&algo_pvid=f51ea843-ec14-4632-9974-88f5128b477e&algo_exp_id=f51ea843-ec14-4632-9974-88f5128b477e-0&pdp_npi=4%40dis%21EUR%2140.96%2133.69%21%21%21313.64%21257.97%21%4021039fae17272463435504450e2d37%2112000036180720579%21sea%21FR%210%21ABX&curPageLogUid=gOixLiNgnswU&utparam-url=scene%3Asearch%7Cquery_from%3A<br>
   Nota:<br>
-  Le reglage de la PAC est effectué par un système déporté (voir plus loin)<br>
+  La commande de la PAC est effectué par un système déporté (voir plus loin)<br>
   La marche rapide de la VMC est effectué par un système déporté (voir plus loin)<br>
 <br>  
 - Pilotage<br>
