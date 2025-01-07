@@ -118,7 +118,7 @@ void nullFunc() {
 // Note K6, K6, K8 sont associés a K5 (alimentation primaire transfo)
 // Exemple S6 = K6 & K5
 
-// Appelé dans dans loop
+// Appelé dans dans loop via display()
 // Concatène les ports de sortie ds une chaine
 // Valeur affichée sur la première ligne lcd
 char* readPortIo_O() {
@@ -133,14 +133,38 @@ char* readPortIo_O() {
   return str;
 }
 
+/**
+ * @brief Utilisé pour détecter les changements d'état sur les ports de sortie
+ * 
+ * @return unsigned 
+ */
+unsigned testPortIO_O() {
+  return 
+  ugpioRead(O_VMC) + 
+  (ugpioRead(O_PAC) << 1) + 
+  (ugpioRead(O_FOUR) << 2) + 
+  (ugpioRead(O_POMPE) << 3) +
+  (ugpioRead(O_EV_ARROSAGE) << 4) +
+  (ugpioRead(O_EV_IRRIGATION) << 5) +
+  (ugpioRead(O_EV_EST) << 6);
+}
+
 // Concatène les ports d'entrée dans une chaine
+// Appelé dans dans loop via display()
 // Nota l'entrée E4 de l'interface opto est utilisée
 // pour autoriser l'affichage
-// Affichage par défaut de la dernière ligne
 char* readPortIo_I() {
   static char str[31];
   sprintf(str, "E1:%s E2:%s E3:%s", n0gpioRead(I_ARROSAGE), n0gpioRead(I_IRRIGATION), n0gpioRead(I_SURPRESSEUR));
   return str;
+}
+/**
+ * @brief Utilisé pour détecter les changements d'état sur les ports d'entrée
+ * 
+ * @return unsigned 
+ */
+unsigned testPortIO_I() {
+  return ugpioRead(I_ARROSAGE) + (ugpioRead(I_IRRIGATION) << 1) + (ugpioRead(I_SURPRESSEUR) << 2);
 }
 
 // Permet de passer un paramètre à un pointeur de fonction

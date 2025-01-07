@@ -64,7 +64,9 @@
    Version 2024.12.31
        modification monostable commande vmc  
    Version 2025.01.04
-       optimisation de la fonction schedule           
+       optimisation de la fonction schedule   
+   Version 2025.01.07
+       Optimisation de l'affichage des capteurs et actionneurs                 
 */
 #include "main.h"
 #include "io.h"
@@ -1226,26 +1228,26 @@ void loop() {
   // Scruter les ports E/S toutes les s pour afficher sur lcd
   // La mise à jour de l'affichage uniquemment sur nouvel état des
   // ports E/S
-  static char portOut_1[25];
-  static char portsIn_1[21];
+  static unsigned uPortIn_1 = 0xFFFFFFFF;
+  static unsigned uPortOut_1 = 0xFFFFFFFF;
 
   if (millis() - tpsProg > INTERVAL_PORT_READ) {
     tpsProg = millis();
 
-    // Lire tous les ports de sortie
-    // Ne mettre à jour que si changement
-    char* portOut_0 = readPortIo_O();
-    if (strcmp(portOut_1, portOut_0) != 0) {
-      strcpy(portOut_1, portOut_0);
+    // Ne mettre à jour l'affichage que si changement
+    unsigned uPortOut_0 = testPortIO_O();
+    if (uPortOut_1 != uPortOut_0) {
+      uPortOut_1 = uPortOut_0;
       display();
     }
-    // Lire tous les ports de d'entrée
-    // Ne mettre à jour que si changement d'état
-    char* portsIn_0 = readPortIo_I();
-    if (strcmp(portsIn_1, portsIn_0) != 0) {
-      strcpy(portsIn_1, portsIn_0);
+
+    // Ne mettre à jour l'affichage que si changement
+    unsigned uPortIn_0 = testPortIO_I();
+    if (uPortIn_1 != uPortIn_0) {
+      uPortIn_1 = uPortIn_0;
       display();
     }
+    
   }
 
   // Scrutation évenements E/S toutes les 100 ms
@@ -1297,7 +1299,7 @@ void loop() {
     lcdPrintRssi(&rssi_buffer[5]);
     // Serial.println(&rssi_buffer[5]);
   }
-  // Suspend Pour 5s, ne pas utiliser ici
+  // Suspend pour 5s, ne pas utiliser ici
   // esp_sleep_enable_timer_wakeup(5000000); // 5 seconds
   // esp_light_sleep_start();
 #ifdef EXEC_TIME_MEASURE

@@ -162,16 +162,19 @@ inline unsigned ugpioRead(int gpio) {
 /**
  * @brief Valeur port gpio O_TRANSFO combinée avec un
  *        autre port gpio complétée à gauche par deux blancs
+ *        Valeur active 0.
  * @param gpio 
  * @return const char* 
  */
 inline const char* gpioSRead(int gpio) {
   unsigned val = digital_read(O_TRANSFO) + digital_read(gpio);
+  // Si les deux sorties sont actives
   return val == 0 ? "  1" : "  0";
 }
 /**
  * @brief Valeur port gpio O_TRANSFO combinée avec un
  *        autre port gpio
+ *        Valeur active 0.
  * @param gpio 
  * @return unsigned 
  */

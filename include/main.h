@@ -196,6 +196,8 @@ void startWatering(int timeout);
 void stopWatering();
 char* readPortIo_O();
 char* readPortIo_I();
+unsigned testPortIO_O();
+unsigned testPortIO_I();
 void ioDisplay();
 void initDisplay();
 void startWatering(int timeout);
