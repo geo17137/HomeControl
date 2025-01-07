@@ -20,10 +20,9 @@ https://fr.aliexpress.com/item/1005006185382987.html?spm=a2g0o.productlist.main.
   La carte ES32A08 est accédée par une application Android via des messages MQTT par l'intermediaire
   d'un courtier Mosquito tournant dans Home Assistant.<br>
   Nota : le courtier MQTT peut également être fourni par un esp32 ou un Raspberry PI.<br>
-  Il est possible de programmer la carte ES32A08 avec tout systeme permettant d'envoyer des messages MQTT<br>
+  Il est possible de programmer la carte ES32A08 avec tout systeme permettant d'envoyer des messages MQTT.<br><br><br>
   
-  Application Android<br>
-
+Application Android<br>
 https://github.com/geo17137/HomeControlFrontEnd
 <br><br>
 Plans<br>
