@@ -52,7 +52,7 @@ extern Param* cParam;
 extern SimpleParam* cDlyParam;
 extern SimpleParam* cGlobalScheduledParam;
 extern SimpleParam* cPersistantParam;
-extern boolean irSendOn;
+extern boolean irSendPacOff;
 
 extern void (*display)();
 extern void (*onSingleClick)();

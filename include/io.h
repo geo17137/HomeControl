@@ -7,7 +7,7 @@
 // et E/S via les registres à décalage de la carte ES32A08
 // si ES32A08 est défini
 
-extern boolean irSendOn;
+extern boolean irSendPacOff;
 unsigned readByteInput();
 boolean readBitsInput(unsigned mask);
 
@@ -58,7 +58,7 @@ inline const char* gpioRead(int gpio) {
  */
 inline const char* gpioReadPac() {
   if (digital_read(O_PAC) == 0)
-    return irSendOn ? "2" : "1";
+    return irSendPacOff ? "2" : "1";
   return "0";
 }
 

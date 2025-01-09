@@ -223,7 +223,7 @@ void _stopWatering() {
 void _startIrrigation() {
   // onLoopTic = nullFunc;
   // display = nullFunc;
-  // Serial.println("Start irrigatuion");
+  // Serial.println("Start irrigation");
   commun2_1();
   startTankFilling();
   // msgOk = "Set";
@@ -271,7 +271,7 @@ void _stopWateringLemon() {
 
 void _startPowerPac() {
   commun2_1();
-  irSendOn = false;
+  irSendPacOff = false;
   on(O_PAC);
   cPersistantParam->set(PAC, 1);
   filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -282,8 +282,8 @@ void _startPowerPac() {
 
 void _stopPowerPac() {
   commun2_1();
-  t_start(tache_t_monoPacOff); // Logique inversée pour relai PAC
-  irSendOn = true;
+  t_start(tache_t_monoPacOff); // arrêt temporisé de la PAC
+  irSendPacOff = true;
   cPersistantParam->set(PAC, 0);
   filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
   // filePowerPac->writeFile("0", "w");
@@ -292,7 +292,6 @@ void _stopPowerPac() {
 //----------------------------------------------------------------------
 // Retour à l'affichage par défaut 
 //----------------------------------------------------------------------
-
 void _ioDisplay() {
   onLoopTic = nullFunc;
   onLoopTic2 = nullFunc;

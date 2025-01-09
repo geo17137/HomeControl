@@ -67,6 +67,8 @@
        optimisation de la fonction schedule   
    Version 2025.01.07
        Optimisation de l'affichage des capteurs et actionneurs                 
+   Version 2025.01.09
+       Signale séquence d'arrêt de la PAC sur l'écran LCD (K2 ->0->1->0..)     
 */
 #include "main.h"
 #include "io.h"
@@ -655,7 +657,7 @@ void monoPacOff(TimerHandle_t xTimer) {
 #endif
   t_stop(tache_t_monoPacOff);
   off(O_PAC);
-  irSendOn = false;
+  irSendPacOff = false;
 }
 
 /*
@@ -976,7 +978,7 @@ void schedule() {
           mqttClient.publish(TOPIC_PAC_IR_OFF, "");
           // Les commandes IR TOPIC_PAC_IR_OFF sont publiées dans loop
           // isSendOn est mis à false dans monoPacOff
-          irSendOn = true; 
+          irSendPacOff = true; 
           t_start(tache_t_monoPacOff);
 #ifdef PERSISTANT_PAC            
           cPersistantParam->set(PAC, 0);
@@ -1234,6 +1236,12 @@ void loop() {
   if (millis() - tpsProg > INTERVAL_PORT_READ) {
     tpsProg = millis();
 
+    static boolean bPac;
+    if (irSendPacOff) {
+      bPac = !bPac;
+      lcdPrintChar((bPac) ? '0' : '1', 2, 4);
+    }
+
     // Ne mettre à jour l'affichage que si changement
     unsigned uPortOut_0 = testPortIO_O();
     if (uPortOut_1 != uPortOut_0) {
@@ -1247,7 +1255,7 @@ void loop() {
       uPortIn_1 = uPortIn_0;
       display();
     }
-    
+
   }
 
   // Scrutation évenements E/S toutes les 100 ms
@@ -1277,7 +1285,7 @@ void loop() {
   }
 
   // Envoi toutes les 15s d'une commande IR sur la PAC
-  if (irSendOn && (millis() - tpsIr > INTERVAL_IR_SEND)) {
+  if (irSendPacOff && (millis() - tpsIr > INTERVAL_IR_SEND)) {
     tpsIr = millis();
     mqttClient.publish(TOPIC_PAC_IR_OFF, "");
   }
@@ -1289,7 +1297,7 @@ void loop() {
     schedule();
   }
 
- if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
+  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
     tpsWifiSignalStreng = millis();
     long rssi = WiFi.RSSI();
     sprintf(rssi_buffer, "RSSI:%ld", rssi);
@@ -1486,14 +1494,14 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       // Couper alim PAC après DLY_OFF secondes
       t_start(tache_t_monoPacOff); // Logique inversée pour relai PAC
       t_stop(tache_t_monoPacOn);
-      irSendOn = true;
+      irSendPacOff = true;
 #ifdef PERSISTANT_PAC
       cPersistantParam->set(PAC, 0);
 #endif
     }
     else {
       // mettre la PAC sous tension
-      irSendOn = false;
+      irSendPacOff = false;
       on(O_PAC);
 #ifdef PERSISTANT_PAC
       cPersistantParam->set(PAC, 1);

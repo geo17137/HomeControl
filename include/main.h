@@ -119,7 +119,7 @@ boolean isWatering;
 boolean isTankFilling;
 boolean startSupressorFilling2;
 boolean startSupressorFilling;
-boolean irSendOn;
+boolean irSendPacOff;
 boolean msgRearm;
 boolean erreurSupresseur;
 boolean erreurSupresseurEvent;

@@ -1,14 +1,14 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.01.07";
+const String version = "2025.01.09";
 
 // #define IO_TEST
-//#define FORCE_DISPLAY
-#define PRODUC_DEVICE
+// #define FORCE_DISPLAY
+#define PRODUCT_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
-#ifdef  PRODUC_DEVICE
+#ifdef  PRODUCT_DEVICE
 #define TOPIC_PREFIX ""
 #ifdef ES32A08
 #define I2C_ADR  PCF8574_ADDR_A21_A11_A01
@@ -25,10 +25,10 @@ const String version = "2025.01.07";
 #endif
 
 // Décommenter les conditions d'exécution désirées
-//------------------------
+//------------------------------------------------
 // #define EXEC_TIME_MEASURE
 
-// Affichage actions
+// Versions à générer
 // #define DEBUG_OUTPUT
 // #define DEBUG_OUTPUT_LOOP2
 // #define DEBUG_OUTPUT_SCHEDULE
