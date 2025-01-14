@@ -1169,6 +1169,9 @@ void setVmc(int cmd) {
     t_start(tache_t_cmdVmcBoard);
     break;
   }
+  char buffer[4];
+  itoa(vmcMode, buffer, 10);
+  mqttClient.publish(TOPIC_STATUS_VMC, buffer); 
 }
 
 //-----------------------------------
@@ -1390,6 +1393,8 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   if (cmp(topic, TOPIC_GET_DLY_PARAM)) {
     // cDlyParam->print();
     mqttClient.publish(TOPIC_DLY_PARAM, cDlyParam->getStr());
+    if (cDlyParam->get(SUPRESSOR_EN))
+      
     return;
   }
   //------------------  TOPIC_WRITE_DLY_PARAM ----------------------

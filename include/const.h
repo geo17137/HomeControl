@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.01.13";
+const String version = "2025.01.14";
 
 // #define IO_TEST
 //#define FORCE_DISPLAY
@@ -244,6 +244,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
 #define TOPIC_STATUS_CUISINE TOPIC_PREFIX  "homecontrol/cuisine_status"
+#define TOPIC_STATUS_VMC                   "homecontrol/vmc_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
 #define SUB_GPIO0_ACTION                   "circuit2/action"
 

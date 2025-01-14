@@ -209,17 +209,13 @@ void localLoop(void) {
 			first = false;
 			// Message vers HA et appli Android
 			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
-		}
-		if (!startSupressorFilling) {
-			startSupressorFilling = true;
-			// lcdSupressorWaitMsg();
-			// setDelay(tache_t_surpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
- 			// if (!cDlyParam->get(SUPRESSOR_EN))
-			// 	t_start(tache_t_surpressorFilling);
-			if (cDlyParam->get(SUPRESSOR_EN)) {
+		}	
+		if (cDlyParam->get(SUPRESSOR_EN)) {
+			if (!startSupressorFilling) {
+				startSupressorFilling = true;
 				// Si arrosage ou remplissage en cours, privilégier le supresseur
 				// - Couper les EV (ne pas couper la pompe (limiter l'usure))
-				//   Notal : si les EV sont coupées, la pompe débite dans le réservoir du surpresseur				
+				//   Notal : si les EV sont coupées, la pompe débite dans le réservoir du surpresseur			
 				if (isTankFilling || isWatering) {
 					isWatering = false;
 					isTankFilling = false;
@@ -234,9 +230,6 @@ void localLoop(void) {
 						writeLogs("Arrèt arrosage");
 				}
 				// Mettre la pompe en route  
-				#ifdef DEBUG_OUTPUT
-				Serial.println("Remplissage surpresseur");
-				#endif
 				lcdSupressorWaitMsg();
 				// Mise à jour dynamique du timeout
 				setDelay(tache_t_surpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
@@ -253,22 +246,13 @@ void localLoop(void) {
 		}
 		// Relance si erreur remplissage (monoSurpressorFilling ) commandé
 		// par bouton local panneau elec ou appli Android (msgRearm->true)
-		if (msgRearm && startSupressorFilling && !startSupressorFilling2) {
-#ifdef DEBUG_OUTPUT_
-			Serial.printf("gpioState(I_REARM) %d, msgRearm %d\n",
-				gpioState(I_REARM),
-				msgRearm);
-			Serial.println("startSupressorFilling2");
-#endif		
+		if (msgRearm && startSupressorFilling && !startSupressorFilling2) {	
 			msgRearm = false;
 			first = true;
 			startSupressorFilling = false;
 			// Interdit une autre tentative
 			startSupressorFilling2 = true;
 			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
-			#ifdef DEBUG_OUTPUT
-			Serial.println(TOPIC_DEFAUT_SUPRESSEUR " off");
-			#endif
 		}  		
 	}
 	// Ouverture du contact supresseur (fin remplissage)
@@ -286,10 +270,11 @@ void localLoop(void) {
 			writeLogs("Fin remplissage surpresseur");
 		}
 	}
-	// Mise à jour affichage toutes les 25s si SURPRESSOR_OFF
+	// Mise à jour affichage toutes les 13s si SURPRESSOR_OFF
 	// Reset message dans PubSubCallback->TOPIC_WRITE_DLY_PARAM
 	static unsigned disFrequency;
-	if (!cDlyParam->get(SUPRESSOR_EN) &&  disFrequency++ % 256) {
+	if (!cDlyParam->get(SUPRESSOR_EN) && (disFrequency++ % 128 == 0)) {
+		// Serial.println("SURPRESSOR_OFF");
 		lcdPrintString(SURPRESSOR_OFF, 1, 0, false);
 	} 
 	// Gestion  des erreurs surpresseur.
