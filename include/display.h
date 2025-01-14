@@ -10,6 +10,7 @@
 #define TO_PROG         "To prog push rotary"
 #define PROG_COOKING    "Prog cooking device"
 #define TO_FONC         "-PROG: push rotary"
+#define SURPRESSOR_OFF  "---SURPRESSOR OFF---"
 
 extern boolean isLcdDisplayOn;
 extern boolean bootDisplayOff;

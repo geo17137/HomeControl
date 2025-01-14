@@ -14,7 +14,7 @@ static unsigned fieldBitIO;
 static unsigned outputShiftedValue;
 
 /**
- * @brief Lit les 8 entrées optoisolée sur
+ * @brief Lit les 8 entrées opto-isolée sur
  * la carte ES32A8. 
  * Contact fermé = 1 dans le champ de 8 bits
  * @return unsigned  
@@ -35,7 +35,7 @@ unsigned readByteInput() {
 }
 
 /**
- * @brief Ecrit un champ de 8bits
+ * @brief Ecrit un champ de 8 bits
  * sur les sorties commandant les relais
  * Les sorties relais sont sur les les bits
  * 16..23 (trois registres à décalage en série)
@@ -63,7 +63,7 @@ void put74HC595(unsigned value) {
 }
 
 /**
- * @brief Reset les registres à décalage
+ * @brief Reset des registres à décalage
  */
 void clear74HC595() {
   for (int i = 0; i < 24; i++) {

@@ -1,6 +1,6 @@
 
 /*
-   Automate remplaçant le ZELIO
+   Automate ESP32 remplaçant le ZELIO
    ******************************************************
    IMPORTANT Si la taille des messages dépasse 256 octets
    modifier dans la librairie PubSubClient.h
@@ -10,10 +10,14 @@
    par
    #define MQTT_MAX_PACKET_SIZE 512
    ou appeler setBufferSize(MQTT_MAX_BUFFER_SIZE);
-   Define stack_size in
-   C:\Users\dtsch\.platformio\packages\framework-arduinoespressif32\tools\sdk\esp32\dio_qspi\include
-   See
+   Solution adoptée dans initMQTTClient() 
+   
+   Definir CONFIG_ARDUINO_LOOP_STACK_SIZE 8192 
+   dans
+   .platformio\packages\framework-arduinoespressif32\tools\sdk\esp32\dio_qspi\include
+   Voir
    https://community.platformio.org/t/esp32-stack-configuration-reloaded/20994/2
+   
    ******************************************************
    Versions: 31/3/23
     - Encapsulation des variables chaines globales de paramétrage
@@ -68,7 +72,12 @@
    Version 2025.01.07
        Optimisation de l'affichage des capteurs et actionneurs                 
    Version 2025.01.09
-       Signale séquence d'arrêt de la PAC sur l'écran LCD (K2 ->0->1->0..)     
+       Signale séquence d'arrêt de la PAC sur l'écran LCD (K2 ->0->1->0..) 
+   Version 2025.01.11
+       Persistance commande EV EST, supression mémorisation (persistance) commande PAC dans loop_prog 
+       Optimisation diverses  
+   Version 2025.01.13
+       Optimisation gestion surpresseur, modification messages supresseur MQTT               
 */
 #include "main.h"
 #include "io.h"
@@ -221,7 +230,7 @@ void initRotaryEncoder() {
 }
 
 void initTime() {
-  // Mise à jour de l'heure
+  // Mise à jour de l'heure à partir de l'heure NTP
   static long gmtOffset_sec = 0, daylightOffset_sec;
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
   configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
@@ -514,7 +523,7 @@ void setup() {
 #ifndef FORCE_DISPLAY
   if (!gpioState(I_LCD_CMD))
     bootDisplayOff = true;
-  #endif
+#endif
   initDisplay();
   display = ioDisplay;
 
@@ -537,6 +546,7 @@ void setup() {
   // Serial.println(__FILENAME__);
   // Serial.println(__FILE__);
 
+// Temps de lecture des infos
   delay(1000);
   logsWrite(bootRaison());
   // Serial.println(strlen(cParam->getStr()));
@@ -550,6 +560,7 @@ void setup() {
 
   //----------------------------------------- Monostables -------------------------------------------------------------
   // ****** Pas d'accès fichier dans un monostable (kernel panic) ******
+  // ****** Pas d'envois repété de messages MQTT (kernel panic)   ******
   // Durée arrosage
   tache_t_watering = t_cree(monoWatering, cvrtic(cDlyParam->get(TIME_WATERING) * 1000));
   // Durée remplissage réservoir
@@ -572,10 +583,8 @@ void setup() {
   tache_t_defaultDisplay = t_cree(monoDefaultDisplay, cvrtic(DLY_DEFAULT_SCREEN) * 1000);
   // Durée d'ouverture de l'electrovanne déportée d'irrigation (circuit d'arriosage des tomates)
   tache_t_offCircuit2 = t_cree(monoOffCircuit2, cvrtic(DLY_DEFAULT_OFF_CIRCUIT2) * 1000);
-  // Bistable reglage débit, durée d'un pas de rapport cyclique
-  tache_t_monoDebit = t_cree(monoDebit, cvrtic(PAS_PERIODE_DEBIT) * 1000, true);
-
-  // t_start(tache_t_monoDebit);
+  // Astable reglage débit, durée d'un pas de rapport cyclique
+  tache_t_monoDebit = t_cree(monoDebit, cvrtic(PAS_PERIODE_DEBIT) * 1000, pdTRUE);
 
   // Set watch dog timeout
 #ifdef ENABLE_WATCHDOG
@@ -602,14 +611,14 @@ void setup() {
     on(O_FOUR);
 #endif  
 #ifdef PERSISTANT_VANNE_EST
-  if (cPersistantParam->get(VANNE_EST) {
+  if (cPersistantParam->get(VANNE_EST)) {
     on(O_TRANSFO);
     on(O_EV_EST);
   }
 #endif  
 
-  // Persistance obligatoire pour ce paramètre
-  // Utilisé par la vanne déportée arrosage des tomates
+// Persistance obligatoire pour ce paramètre
+// Utilisé par la vanne déportée arrosage des tomates
 ItemParam item = cParam->get(IRRIGATION, 0);
 joursCircuit2 = item.MMax;
 
@@ -630,7 +639,7 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
 
 /*
  * Monostable mise en route carte VMC
- * Laisse la carte est alimentée par la mise sous
+ * La carte est alimentée par la mise sous
  * temsion de la VMC. Laisse le temps à l'esp01 le temps de démarrer
  * ACCES AUX FICHIERS NON AUTORISES
  */
@@ -640,7 +649,8 @@ void monoCmdVmcBoard(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("start board\n", OUTPUT_PRINT);
 #endif
-  t_stop(tache_t_cmdVmcBoard);
+  // t_stop(tache_t_cmdVmcBoard);
+  // Envoi de la commande vers la carte déportée
   if (vmcFast) 
     mqttClient.publish(VMC_BOARD_ACTION, S_ON);
   else
@@ -648,36 +658,26 @@ void monoCmdVmcBoard(TimerHandle_t xTimer) {
 }
 
 /*
- * Monostable arret PAC
+ * Monostable arrêt PAC
  *
  */
 void monoPacOff(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("Mono Arret PAC\n", OUTPUT_PRINT);
 #endif
-  t_stop(tache_t_monoPacOff);
+// t_stop(tache_t_monoPacOff);
   off(O_PAC);
   irSendPacOff = false;
 }
 
 /*
  * Monostable mise en route de la PAC
- * La commande IR est envoyée après x secondes via
- * un dispositif déporté
+ * Envoi d'une commande IR retardée après mise sous tension
  */
 void monoPacOn(TimerHandle_t xTimer) {
-  static int count;
-#ifdef DEBUG_OUTPUT
-  print("Envoi IR\n", OUTPUT_PRINT);
-#endif
-  // Serial.println("TOPIC_PAC_IR_ON");
-  // Envoi de 4 commandes au cas ou l'IR est masquée 
-  if (count++ >= 4) {
-    t_stop(tache_t_monoPacOn);
-    count = 0;
-  }
+//  t_stop(tache_t_monoPacOn);
   mqttClient.publish(TOPIC_PAC_IR_ON, "");
-  mqttClient.publish(TOPIC_PAC_IR_PARAM_APPLY, "");
+//  mqttClient.publish(TOPIC_PAC_IR_PARAM_APPLY, "");
 }
 
 /*
@@ -698,7 +698,7 @@ void monoTankFilling(TimerHandle_t xTimer) {
  * Monostable assurant l'arrêt pompe si problème sur le surpresseur (règlable dans dlyParam)
  */
 void monoSurpressorFilling(TimerHandle_t xTimer) {
-  t_stop(tache_t_surpressorFilling);
+  // t_stop(tache_t_surpressorFilling);
   // startSupressorFilling = false;
   off(O_POMPE);
   if (!startSupressorFilling2) {
@@ -731,18 +731,18 @@ void monoCmdEvEst(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("monoCmdEvEst\n", OUTPUT_PRINT);
 #endif
-  t_stop(tache_t_cmdEvEst);
+  // t_stop(tache_t_cmdEvEst);
   off(O_TRANSFO);
   off(O_EV_EST);
 }
 
 /*
- * Monostable assurant l'arrêt eclairage LCD
+ * Monostable assurant l'arrêt éclairage LCD
  */
 void monoCmdBackLight(TimerHandle_t xTimer) {
   if (!electricalPanelOpen)
     backLightOff();
-  t_stop(tache_t_backLight);
+  // t_stop(tache_t_backLight);
 }
 
 /*
@@ -750,7 +750,7 @@ void monoCmdBackLight(TimerHandle_t xTimer) {
  */
 void monoCmdBackLight2(TimerHandle_t xTimer) {
   backLightOff();
-  t_stop(tache_t_backLight);
+  // t_stop(tache_t_backLight);
 }
 
 /*
@@ -758,19 +758,19 @@ void monoCmdBackLight2(TimerHandle_t xTimer) {
  */
 void monoDefaultDisplay(TimerHandle_t xTimer) {
   _ioDisplay();
-  t_stop(tache_t_defaultDisplay);
+  // t_stop(tache_t_defaultDisplay);
 }
 
 /*
- * Monostable assurant la coupure de l'electrovanne du circuit2 d'irrigation
+ * Monostable assurant la coupure de l'électrovanne du circuit2 d'irrigation
  */
 void monoOffCircuit2(TimerHandle_t xTimer) {
   mqttClient.publish(SUB_GPIO0_ACTION, "off");
-  t_stop(tache_t_offCircuit2);
+  // t_stop(tache_t_offCircuit2);
 }
 
 /*
- * Multistable de reglage du débit l'electrovanne sud
+ * Astable de reglage du débit l'electrovanne sud
  * Période PAS_PERIODE_DEBIT (5s)
  */
 void monoDebit(TimerHandle_t xTimer) {
@@ -778,11 +778,11 @@ void monoDebit(TimerHandle_t xTimer) {
   static int count;
   if (count < cyclcalReport) {
     on(O_EV_EST);
-    // Serial.printf("cyclcalReport=%02d, count=%02d, ON \r", cyclcalReport, count);
+  //  Serial.printf("cyclcalReport=%02d, count=%02d, ON \r", cyclcalReport, count);
   }
   else {
     off(O_EV_EST);
-    // Serial.printf("cyclcalReport=%02d, count=%02d, OFF\r", cyclcalReport, count);
+  //  Serial.printf("cyclcalReport=%02d, count=%02d, OFF\r", cyclcalReport, count);
   }
   count = ++count % MAX_PAS_PERIODE_DEBIT;
 } 
@@ -790,7 +790,7 @@ void monoDebit(TimerHandle_t xTimer) {
 void onVanneEst() {
   on(O_TRANSFO);
   t_start(tache_t_monoDebit);
-  // Logique inversée
+  // Logique inversée, utilisé pour signaler commande vanne EST
   cmdVanneEst = 0;
 }
 
@@ -822,7 +822,7 @@ void schedule() {
 #ifndef TIME_SIMULATOR
   int h = rtc->getHour(true); // true -> format 24H
   int m = rtc->getMinute();
-  // Mise à jour du jours courant (persistant)
+  // Mise à jour du jours courant (persistant) utilisé pour circuit secondaire irrigation
   if (h == 0 && !flagJours) {
     flagJours = true;
     joursCircuit2++;
@@ -847,9 +847,8 @@ void schedule() {
 #endif
 
   for (int deviceId = 0; deviceId < N_DEVICES; deviceId++) {
-    // Programmation autorisée pour ce device
+    // Programmation autorisée pour ce device ?
     if (!cGlobalScheduledParam->get(deviceId)) {
-      // Serial.printf("deviceId=%d\n", deviceId);
       continue;
     }
     for (int timeSet = 0; timeSet < N_PLAGES; timeSet++) {
@@ -900,7 +899,11 @@ void schedule() {
 #ifdef DEBUG_OUTPUT_SCHEDULE
           Serial.printf("%02d:%02d on(O_EV_EST)\n", h, m);
 #endif      
-          // La durée d'ouverture est gérée par un monostable
+          // La durée d'ouverture de la vanne est gérée par un monostable
+#ifdef PERSISTANT_VANNE_EST
+          cPersistantParam->set(VANNE_EST, 1);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+#endif          
           onVanneEst();
           break;
 
@@ -912,6 +915,7 @@ void schedule() {
           cPersistantParam->set(PAC, 1);
           filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif           
+          // Envoi d'une commande IR retardée
           t_start(tache_t_monoPacOn);
           break;
 
@@ -958,9 +962,10 @@ void schedule() {
           filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
 #endif
           off(O_FOUR);
+          // Mise à jour de l'IHM déportée
           mqttClient.publish(TOPIC_STATUS_CUISINE, "off"); 
           break;
-        // Remplissage du réservoir gérée par un monostable
+        // L a durée du remplissage du réservoir gérée par un monostable
         case IRRIGATION:
           break;
 
@@ -968,6 +973,10 @@ void schedule() {
 #ifdef DEBUG_OUTPUT_SCHEDULE
           Serial.printf("%02d:%02d off(O_EV_EST)\n", h, m);
 #endif
+#ifdef PERSISTANT_VANNE_EST
+          cPersistantParam->set(VANNE_EST, 0);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+#endif 
           offVanneEst();
           break;
 
@@ -975,10 +984,12 @@ void schedule() {
 #ifdef DEBUG_OUTPUT_SCHEDULE
           Serial.printf("%02d:%02d PAC ON", h, m);
 #endif
+          // Envoi de la commande d'aarêt sur l'emetteur IR
           mqttClient.publish(TOPIC_PAC_IR_OFF, "");
           // Les commandes IR TOPIC_PAC_IR_OFF sont publiées dans loop
-          // isSendOn est mis à false dans monoPacOff
+          // irSendPacOff est mis à false dans monoPacOff
           irSendPacOff = true; 
+          // Coupure retardée de l'alimentation de la PAC 
           t_start(tache_t_monoPacOff);
 #ifdef PERSISTANT_PAC            
           cPersistantParam->set(PAC, 0);
@@ -1009,7 +1020,7 @@ void schedule() {
 }
 
 //-----------------------------------
-// Démarrage et arrêt arrosage 
+// Démarrage et arrêt lance arrosage 
 //-----------------------------------
 /**
  * @brief  Démarrage arrosage
@@ -1032,7 +1043,7 @@ void startWatering(int timeout) {
   on(O_POMPE);
 }
 /**
- * @brief  Arrêt arrosage
+ * @brief  Arrêt lance arrosage
  * @note   
  * @retval None
  */
@@ -1045,9 +1056,9 @@ void stopWatering() {
   wateringNoTimeOut = 0;
 }
 
-//-----------------------------------
+//-----------------------------------------
 // Démarrage et arrêt remplissage réservoir
-//-----------------------------------
+//-----------------------------------------
 /**
  * @brief  Démarrage remplissage réservoir
  * @note   
@@ -1057,7 +1068,7 @@ void startTankFilling() {
   setDelay(tache_t_tankFilling, cvrtic(cDlyParam->get(TIME_TANK_FILLING) * 1000));
   t_start(tache_t_tankFilling);
   isTankFilling = true;
-  // Priorité au remplissage
+  // Priorité au remplissage si utilisation de la pompe en cours
   if (isWatering) {
     on(O_EV_IRRIGATION);
     off(O_EV_ARROSAGE);
@@ -1105,7 +1116,7 @@ boolean isEdge(int nInput) {
  * @param cmd : CMD_VMC_OFF | CMD_VMC_PROG | CMD_VMC_ON_FAST | CMD_VMC_ON
  */
 void setVmc(int cmd) {
-  vmcMode = cmd;
+  // vmcMode = cmd;
 #ifdef PERSISTANT_VMC
   cPersistantParam->set(VMC, cmd);
   filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1115,21 +1126,26 @@ void setVmc(int cmd) {
   case CMD_VMC_OFF:
     // Mode off (pas de vcm active, même ne mode programmée)
     off(O_VMC);
+    // vmcMode est utilisé pour signaler le mode en cours sur l'IMH déportée
     vmcMode = VMC_STOP;
     break;
   case CMD_VMC_PROG:
+      // Mode programmé, onVmc et mise à jour par schedule
     switch (onVmc) {
     case 0:
+      // Arrèt programmé 
       off(O_VMC);
       vmcFast = false;
       vmcMode = VMC_PROG_OFF;
       break;
     case 1:
+      // VMV marche lente
       on(O_VMC);
       vmcFast = false;
       vmcMode = VMC_PROG_ON;
       break;
     case 2:
+      // VMV marche rapide
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);
       vmcFast = true;
@@ -1138,7 +1154,7 @@ void setVmc(int cmd) {
     }
     break;
   case CMD_VMC_ON_FAST:
-    // Mode forcé vmc vitesse rapide (programmation off)
+    // Mode forcé VMC (hors programmation) en vitesse rapide
     // Serial.printf("SetVmc CMD_VMC_ON_FAST: %d\n", CMD_VMC_ON_FAST);
     vmcFast = true;
     vmcMode = VMC_ON_FAST;
@@ -1146,8 +1162,7 @@ void setVmc(int cmd) {
     t_start(tache_t_cmdVmcBoard);
     break;
   case CMD_VMC_ON:
-    // Serial.printf("SetVmc CMD_VMC_ON: %d\n", CMD_VMC_ON);
-    // Mode forcé vmc vitesse lente (programmation off)
+    // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
     vmcFast = false;
     vmcMode = VMC_ON;
@@ -1227,9 +1242,8 @@ void loop() {
     // }
   //}
 
-  // Scruter les ports E/S toutes les s pour afficher sur lcd
-  // La mise à jour de l'affichage uniquemment sur nouvel état des
-  // ports E/S
+  // Scruter les ports E/S toutes les s pour les afficher sur LCD
+  // Affichage uniquemment sur nouvel état des ports E/S
   static unsigned uPortIn_1 = 0xFFFFFFFF;
   static unsigned uPortOut_1 = 0xFFFFFFFF;
 
@@ -1243,6 +1257,8 @@ void loop() {
     }
 
     // Ne mettre à jour l'affichage que si changement
+    // testPortIO_0() calcule la somme des bits IO en 
+    // tenant compte de leur poids
     unsigned uPortOut_0 = testPortIO_O();
     if (uPortOut_1 != uPortOut_0) {
       uPortOut_1 = uPortOut_0;
@@ -1284,10 +1300,10 @@ void loop() {
     onLoopTic2();
   }
 
-  // Envoi toutes les 15s d'une commande IR sur la PAC
-  if (irSendPacOff && (millis() - tpsIr > INTERVAL_IR_SEND)) {
+  // Envoi toutes les 15s d'une commande IR off sur la PAC si cycle d'arrèt
+  if (irSendPacOff && (millis() - tpsIr) > INTERVAL_IR_SEND) {
     tpsIr = millis();
-    mqttClient.publish(TOPIC_PAC_IR_OFF, "");
+    mqttClient.publish(TOPIC_PAC_IR_OFF, "");  
   }
 
   // Appel de schedule toutes les minutes
@@ -1296,14 +1312,14 @@ void loop() {
     tpsSchedule = millis();
     schedule();
   }
-
+  // Envoi du niveau en db WiFi RSSI
   if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
     tpsWifiSignalStreng = millis();
-    long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%ld", rssi);
-    mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     if (!isLcdDisplayOn)
       return;
+    long rssi = WiFi.RSSI();
+    sprintf(rssi_buffer, "RSSI:%ld", rssi);
+    //mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     lcdPrintRssi(&rssi_buffer[5]);
     // Serial.println(&rssi_buffer[5]);
   }
@@ -1384,6 +1400,9 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
 #endif
     // cDlyParam->print();
     fileDlyParam->writeFile(strPayload.c_str(), "w");
+    // Mis à jour si modification de auto surpresseur
+    ioDisplay();
+		display = ioDisplay;
     return;
   }
   //------------------  TOPIC_GET_GPIO ----------------------
@@ -1445,7 +1464,6 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       on(O_FOUR);
       mqttClient.publish(TOPIC_STATUS_CUISINE, "on");      
     }
-
     else  if (cmd==0){
       off(O_FOUR);
       mqttClient.publish(TOPIC_STATUS_CUISINE, "off");   
@@ -1488,7 +1506,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     // Logique inversée pour relai PAC
     // 1 = arret
     if (cmd) {
-      // Arreter la PAC via IR
+      // Arrèter la PAC via IR
       // Serial.println("Arreter la PAC via IR");
       mqttClient.publish(TOPIC_PAC_IR_OFF, "");
       // Couper alim PAC après DLY_OFF secondes

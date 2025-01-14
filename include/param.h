@@ -4,7 +4,7 @@
 */
 #ifndef PARAM_H
 #define PARAM_H
-#include <arduino.h>
+#include <Arduino.h>
 #include "const.h"
 
 class ItemParam {

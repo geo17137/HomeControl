@@ -1,10 +1,10 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.01.09";
+const String version = "2025.01.13";
 
 // #define IO_TEST
-// #define FORCE_DISPLAY
+//#define FORCE_DISPLAY
 #define PRODUCT_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
@@ -56,19 +56,19 @@ const String version = "2025.01.09";
 
 // Delay de mise hors tension PAC (s)
 #define DLY_PAC_OFF 5 * 60
-// Delay de mise sous tension PAC 20 (s)
+// Retard envoi commande carte IR après mise sous tension PAC (s)
 #define DLY_PAC_ON  20
-// Delay de commande carte vmc (s)
+// Retard commande carte deportée fast vmc après mise sa mise sous tension (s)
 #define DLY_VMC_BOARD_ON 10
-// Delay COUPURE ECLAIRAGE LCD (s)
+// Délai COUPURE ECLAIRAGE LCD (s)
 #define DLY_BACK_LIGHT 10
-// Delay COUPURE ECLAIRAGE LCD panneau electrique ouvert(s)
+// Délai COUPURE ECLAIRAGE LCD panneau electrique ouvert (s)
 #define DLY_BACK_LIGHT2 180
-// delay reprise affichage par défaut (s)
-#define DLY_DEFAULT_SCREEN 10*60
-// Délay de coupure circuit2 (s)
+// Délai reprise affichage par défaut (s)
+#define DLY_DEFAULT_SCREEN 6 * 60
+// Délai de coupure circuit2 (s)
 #define DLY_DEFAULT_OFF_CIRCUIT2 60*60
-// Période bistable reglage débit
+// Période bistable reglage débit (s)
 const int PAS_PERIODE_DEBIT = 5;
 // Période du rapport cyclique vanne EST en s
 const int PERIODE_DEBIT = 100;
@@ -78,7 +78,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TIMEOUT    1
 #define NO_TIMEOUT 0
 
-// Delai des appels dans loop en ms
+// Délai des appels dans loop en ms
 #define INTERVAL_PORT_READ  1000
 #define INTERVAL_IO_SCRUT   100
 #define INTERVAL_RESET_WDT  500
@@ -115,7 +115,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 //-----------------------
 //    Sorties relais
 //-----------------------
-// Relais contacts en 220V
+// Relais avec contacts sous 220V
 #ifdef ES32A08
 // Les sorties relais sont liée à la postion des bits
 // dans le registre 74HC595 (U05)
@@ -124,7 +124,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define O_FOUR          (0x04 << 16)
 #define O_POMPE         (0x08 << 16)
 #define O_TRANSFO       (0x10 << 16)
-// Realis contacts 19V
+// Relais avec contacts sous 19V
 #define O_EV_ARROSAGE   (0x20 << 16)
 #define O_EV_IRRIGATION (0x40 << 16)
 #define O_EV_EST        (0x80 << 16)
@@ -161,18 +161,19 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 // Commande mqtt
 #define S_OFF "off"
 #define S_ON  "on"
+
 //-----------------------
 //    Entrées
 //-----------------------
 #ifdef ES32A08
-// Entrée serie HCT74165
+// Entrée série circuit HCT74165
 #define DATA_165  GPIO_NUM_5
 
 #define I_ARROSAGE    (1 << 0)
 #define I_IRRIGATION  (1 << 1)
 #define I_SURPRESSEUR (1 << 2)
 #define I_LCD_CMD     (1 << 3)
-#else
+#else // commande directe gpio esp32 
 #define I_ARROSAGE    27
 #define I_IRRIGATION  14
 #define I_SURPRESSEUR 12
@@ -183,19 +184,20 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define I_REARM       36 
 
 // Affichage LCD
-// Ports I2C
+// Ports I2C de commande
 #define I2C_SCL 22
 #define I2C_SDA 21
-// Caractéristiques affichage
-const int lcdColumns = 20;
-const int lcdRows = 4;
-#define LCD_SPACE_SYMBOL 0x20 //space symbol from LCD ROM, see p.9 of GDM2004D datasheet
+// Caractéristiques affichage LCD
 #define COLUMS           20   //LCD columns
 #define ROWS             4    //LCD rows
+
+#define LCD_SPACE_SYMBOL 0x20 //space symbol from LCD ROM, see p.9 of GDM2004D datasheet
+
 // Position de l'affichage RSSI
 #define RSSI_ROWS_POS   0
 #define RSSI_COLUMS_POS 17
 
+#ifndef ES32A08 
 // Ports non utilisés
 // programmés en sortie
 #define NC_32 32
@@ -204,8 +206,9 @@ const int lcdRows = 4;
 #define NC_00 00
 #define NC_02 02
 #define NC_15 15
+#endif
 
-// Le TOPIC_PREFIX utilisé pour le système sous test
+// Le TOPIC_PREFIX utilisé pour un système sous test
 // Chaine vide en production
 
 //-------------Abonnements---------------------
@@ -236,7 +239,7 @@ const int lcdRows = 4;
 #define TOPIC_PARAM          TOPIC_PREFIX  "homecontrol/param"
 #define TOPIC_DLY_PARAM      TOPIC_PREFIX  "homecontrol/dly_param"
 #define TOPIC_GPIO           TOPIC_PREFIX  "homecontrol/gpio"
-#define TOPIC_DEFAUT_SUPRESSEUR TOPIC_PREFIX "homecontrol/defaut_reservoir"
+#define TOPIC_DEFAUT_SUPRESSEUR            "homecontrol/default_surpressor"
 #define TOPIC_GLOBAL_SCHED   TOPIC_PREFIX  "homecontrol/global_sched" 
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
@@ -249,7 +252,7 @@ const int lcdRows = 4;
 #define TOPIC_PAC_IR_ON          TOPIC_PREFIX "mitsubishi/param/on"
 #define TOPIC_PAC_IR_OFF         TOPIC_PREFIX "mitsubishi/param/off"
 
-//-------------Publications pour l'appli VmcCmd (carte déportée command marche rapide vmc -
+//-------------Publications pour l'appli VmcCmd (carte déportée command marche rapide vmc)
 #define VMC_BOARD_ACTION TOPIC_PREFIX TOPIC_PREFIX "vmc_board/action"
 
 // Time out watch dog (ms)
@@ -262,21 +265,23 @@ const int lcdRows = 4;
 #define LOG_FILE_NAME   "/logs.txt"
 // Paramétres des temporistions
 #define DLY_PARAM_FILE_NAME "/dlyParam.txt"
-// Paramétre des autorisation des cycles programmés
+// Paramétres des autorisation des cycles programmés
 #define GLOBAL_SCHEDULED_PARAM_FILE_NAME "/globalScheduled.txt"
 // Fichier des données persistantes
 #define FILE_PERSISTANT_DEVICE "/persistant.txt"
 
 // Contenu du fichier DLY_PARAM_FILE_NAME (valeurs par défaut)
-// Temporisations monostables par défaut en secondes
+//  Temporisations monostables par défaut en secondes
 //  et paramètres heure été/hivers, enregistrement logs
+// -----------------------------------------------
 // Durée arrosage 30mn (1800s)
 // Durée commande EV Est 10mn (600s)
 // Durée remplissage réservoir 2mn30 (150s)
-// Durée maximale lmise sous pression supresseur 65s
+// Durée maximale mise sous pression supresseur 65s
 // Heure d'hivers 1, été 2
-// Autorisation logs 1 sino 0
-
+// Autorisation logs 1 sinon 0
+// Autorisation mise en route supresseur 1 sinon 0
+// -----------------------------------------------
 #define DEFAUT_DELAY_PARAM "1800:600:150:65:1:0:1"
 
 // Position des paramètres dans DEFAUT_DELAY_PARAM
@@ -322,13 +327,15 @@ const int lcdRows = 4;
 #define PERSISTANT "0:0:0:1:0"
 #define N_PERSISTANT_PARAM MAX_ITEMS_GLOBAL_SCHEDULED_PARAM
 
-// Paramétrage des éléments persistant
+// Paramétrage des éléments persistants après reboot
+// La persistance n'est mis en oeuvre que pour les cycles programmés
+// sauf pour la VMC
 // Définir ces éléments pour les rendre persistant
 // après reboot (recoompilation obligatoire)
 #define PERSISTANT_POWER_COOK 
 #define PERSISTANT_PAC        
 #define PERSISTANT_VMC 
-// #define PERSISTANT_VANNE_EST  
+#define PERSISTANT_VANNE_EST  
 // Non encore implémenté
 // #define PERSISTANT_IRRIGATION 
 
@@ -357,10 +364,10 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
   Les quatres dernières plages concernent la commande de la VMC
 
 - Champs disponibles et utlisés pour d'autres usages
-  POWER_COOK :  h_min, m_min pour toutes les plages (3 plages utilisées)
+  POWER_COOK :  h_min, m_min pour toutes les plages pour 3 plages utilisées (1 plage libre)
   IRRIGATION :  h_max -> intervalle ouverture circuit2 (irrigation tomates), m_max -> jour courant (plage 0 uniquement) (3 plages utilisées)
-  VANNE_EST  :  tout les champs sont utilisés (3 plages utilisées)
-  PAC        :  tout les champs sont utilisés (1 plage utilisée)
+  VANNE_EST  :  tout les champs sont utilisés pour 3 plages (1 plage libre)
+  PAC        :  tout les champs sont utilisés pour 1 plage (3 plages libres)
   VMC        :  tout les champs sont utilisés (toutes les plages utilisées)
 
   La programmation des actions est faite toute les minutes dans schedule()
@@ -393,11 +400,11 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
 // "0:00:00:00:00:"
 #define TAILLE_PLAGE 14
 
-// Messages utilisés dans local_loop
+// Messages utilisés dans local_loop pour l'affichage sur LCD
 #define SUPRESSOR_FILLING   "FILL SUPRESSOR."
 #define WAIT                "WAIT"
 #define SEE_NOTICE          "SEE NOTICE"
-#define SURPRESSOR_FAULT    "SURPRESSOR FAULT"
+#define SURPRESSOR_FAULT    "SURPRESSOR FAIL"
 #define PRESS_THE_BUTTON    "PRESS THE BUTTON"
 #define SEE_NOTICE          "SEE NOTICE"
 #define PUMP_DEFAULT        "PUMP DEFAULT"

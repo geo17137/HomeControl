@@ -2,48 +2,54 @@
 #include "io.h"
 
 /*
-  L'IHM en local est réalisée à l'aide d'un afficheur LCD 20x4
+  L'IHM locale est réalisée à l'aide d'un afficheur LCD 20x4
   https://fr.aliexpress.com/w/wholesale-20x4-lcd-arduino.html
-  équipé d'un interface I2C
-  et d'un encodeur rotatif dont l'axe  vertical est possède un contact on/off permettant
-  des commandes de type single clic ou double clic. La détection des clics et faite
-  par interruption (ISR)
+  équipé d'un interface I2C et d'un encodeur rotatif dont l'axe
+  vertical est possède un contact on/off permettant des commandes
+  de type single clic ou double clic. 
+  La détection des clics et faite par interruption (ISR)
 
   L'interface lcd et le bouton rotary permettent de réaliser toutes les actions faites depuis
-  un smartphone sauf la programmation des tâches horaires.
+  un smartphone exepté la programmation des tâches horaires.
 
-  Remarque générale :
+  Remarques générales :
   A chaque rotation du bouton rotary la fonction affectée au pointeur de fonction onRotary est appelé.
-  A chaque appuy sur l'axe du bouton les fonctions affectées pointeurs de fonctions onSingleClick et onDoubleClic sont appelées
-  - les fonctions appelées par le pointeur de fonction onRotary sont hors ISR
-  - les fonctions appelées par les pointeurs de fonction onSingleClick et onDoubleClic sont dans une ISR
+  A chaque appuy sur l'axe du bouton, les fonctions affectées pointeurs de fonctions onSingleClick et 
+  onDoubleClic sont appelées
+  - les fonctions appelées par le pointeur de fonction onRotary sont hors contexte ISR
+  - les fonctions appelées par les pointeurs de fonction onSingleClick et onDoubleClic sont dans un
+    contexte ISR
 
   Affichage des opérations et des états sur lcd display
   -----------------------------------------------------
   L'affichage sur l'écran LCD doit se faire dans un contexte d'execution hors ISR
   du fait de la communication avec l'interface de l'écran utilisant le protocole I2C.
   Les échanges avec ce protoloce sont sous interruptions.
-  Ceci interdit d'utiliser l'afficheur LCD dans les fonctions déclanchées par un clic.
+  Ceci interdit d'utiliser l'afficheur LCD dans les fonctions déclenchées par des clics,
+  ce problème est contourné par un changement de contexte (voir plus loin).
 
-  Choix des opérations à exécuter affichées sur l'écran LCD:
+  Choix des opérations à exécuter affichées sur l'écran LCD
+  ---------------------------------------------------------
   Les opérations sont choisies par un encodeur rotatif.
-  A chaque rotation (changement de valeur de l'encodeur), on_rotary est appelé
-  avec pour paramètre la valeur encodée dans la gamme setBoundaries(min, max)
-  Cette valeur est mémorisée dans une variable globale rotary
-  puis la tâche d'affichage a executer est appelée via le pointeur de fonction onRotary.
-  initialisé sur la fonction à exécuter. Le contexte d'exécution est hors ISR (il fait parti de loop).
+  A chaque rotation (changement de valeur de l'encodeur), la fonction on_rotary est appelé
+  avec pour paramètre la valeur encodée située dans la gamme setBoundaries(min, max).
+  Cette valeur est mémorisée dans une variable globale rotary,
+  puis l'affichage est mis à jour via une fonction appelée par le pointeur de fonction onRotary
+  initialisé sur la fonction à exécuter. 
+  Le contexte d'exécution est hors ISR (il fait parti de loop).
 
-  Déclenchement des opérations à exécuter:
+  Déclenchement des opérations à exécuter
+  ---------------------------------------
   Les opérations sont déclenchées par appuy sur le bouton de l'encodeur.
+  Deux type d'appuy sont pris en compte : single clic et double clic.
   Suivant le type d'appuy, les fonctions pointées par onSingleClick ou onDoubleClick sont appelées.
-  Le contexte d'execution de ces fonctions est dans une ISR, interdisant l'utilisation directe de l'afficheur LCD.
-  (à cause du protocole I2C sous ISR utilisé pour communiquer avec l'afficheur).
+  Le contexte d'execution de ces fonctions dans l'ISR gérant les clics, interdisant l'utilisation directe
+  de l'afficheur LCD (à cause du protocole I2C sous ISR utilisé pour communiquer avec l'afficheur).
   Pour permettre l'utilisation de l'afficheur LCD il est necessaire d'effectuer un changement de contexte IRS->loop
   Le changement de contexte est effectué de façon suivante:
   Les fonctions appelées initialisent des pointeurs de fonction sur la tâche à exécuter, puis mettent en place
-  un crochet appelé dans loop. 
-  Ce crochet permet un changement de contexte et appele les fonctions via les pointeurs de fonctions initialisés
-  dans l'ISR. 
+  un crochet appelé dans la boucle loop. 
+  Ce crochet appele la (les) fonction(s) souhaitées via les pointeurs de fonctions initialisés dans l'ISR. 
   
   // Dans loop
       onLoopTic();  // le crochet 
@@ -68,11 +74,14 @@
     (*myFunctionPtr)(funcToCall);
   }
 
-  Cette fonction déclare un pointeur de fonction void (*myFunctionPtr)
-  recevant en paramètre un pointeur de fonction ((void (*function)());
+  Cette fonction déclare un pointeur de fonction *myFunctionPtr
+    void (*myFunctionPtr)(void (*function)());
+  recevant en paramètre un pointeur de fonction *function
+    void (*function)();
 
-  myFunctionPtr est initialisé avec l'adresse de loopTic
-  LoopTic doit être une fonction de type void f((*func)()) :
+  puis myFunctionPtr est initialisé avec l'adresse de loopTic
+  Nota : loopTic doit être une fonction recevant comme paramêtre 
+  un pointeur de fonction :
 
   void loopTic(void (*function)())
 
@@ -88,25 +97,29 @@
   // Puis dans loop le crochet onLoopTic() appele funcToCall
 
   Exemple :
-  funcToCall = func;
+  funcToCall = myFunc;
   onDoubleClick = loopTicParam;
   // doubleClick sur le bouton rotaty
-  loopTicParam() -> loopTic(func) => met en place le crochet
+  // loopTicParam() -> loopTic(func) => met en place le crochet
   // Dans loop
    void loop {
-     ....
-     onLoopTic(); // appel de func
+     ...
+     onLoopTic(); // appel de myFunc
+     ...
    }
 
-  Le crochet est annihilé par onLoopTic = nullFunc
+  Une fois utilisé, le crochet est annihilé par en faisant pointer onLoopTic
+  sur une fonction vide :
+    onLoopTic = nullFunc
 
-   void nullFunc() {
-   }
+    void nullFunc() {
+    }
 
   Nota :
   Pour exécuter des fonctions diverses (avec passage de paramètre) sur le même appel de fonction onRotary,
-  on utilise le même mécanisme (sans necessiter de crochet dans loop [onRotary est hors isr])
-  Il suffit de faire pointer onRotary sur différentes fonction suivant les besoins
+  on utilise le même mécanisme sans necessiter de crochet dans loop [onRotary est hors isr].
+  Il suffit de faire pointer onRotary sur différentes fonctions suivant les besoins.
+
 */
 
 // Utilisé pour annihiler les crochets
@@ -135,7 +148,7 @@ char* readPortIo_O() {
 
 /**
  * @brief Utilisé pour détecter les changements d'état sur les ports de sortie
- * 
+ *        afin de déclencher l'affichage.
  * @return unsigned 
  */
 unsigned testPortIO_O() {
@@ -152,7 +165,7 @@ unsigned testPortIO_O() {
 // Concatène les ports d'entrée dans une chaine
 // Appelé dans dans loop via display()
 // Nota l'entrée E4 de l'interface opto est utilisée
-// pour autoriser l'affichage
+// pour autoriser l'affichage (non affichée)
 char* readPortIo_I() {
   static char str[31];
   sprintf(str, "E1:%s E2:%s E3:%s", n0gpioRead(I_ARROSAGE), n0gpioRead(I_IRRIGATION), n0gpioRead(I_SURPRESSEUR));
@@ -160,18 +173,24 @@ char* readPortIo_I() {
 }
 /**
  * @brief Utilisé pour détecter les changements d'état sur les ports d'entrée
- * 
+ *        afin de déclencher l'affichage.
  * @return unsigned 
  */
 unsigned testPortIO_I() {
   return ugpioRead(I_ARROSAGE) + (ugpioRead(I_IRRIGATION) << 1) + (ugpioRead(I_SURPRESSEUR) << 2);
 }
 
-// Permet de passer un paramètre à un pointeur de fonction
-// Appelé selon les besoins par onSignelClick ou onDoubleClick()
-void loopTicParam() {
+inline void resetDlyDefaultDisplay() {
   t_stop(tache_t_defaultDisplay);
   t_start(tache_t_defaultDisplay);
+}
+
+/**
+ * @brief Permet de passer un paramètre à un pointeur de fonction
+ *  Appelé selon les besoins par onSignelClick ou onDoubleClick()
+ */
+void loopTicParam() {
+  resetDlyDefaultDisplay(); 
   // Déclaration d'un pointeur de fonction 
   // recevant en paramètre un pointeur de fonction
   void (*myFunctionPtr)(void (*func)());
@@ -181,11 +200,13 @@ void loopTicParam() {
   (*myFunctionPtr)(funcToCall);
 }
 
-// Permet de passer un paramètre à un pointeur de fonction
-// Appelé par onSingleClick() dans encoderOutputTask2
+/**
+ * @brief Permet de passer un paramètre à un pointeur de fonction
+ *  Appelé par onSingleClick() dans encoderOutputTask2
+ * 
+ */
 void loopTicParam2() {
-  t_stop(tache_t_defaultDisplay);
-  t_start(tache_t_defaultDisplay);
+  resetDlyDefaultDisplay(); 
   // Déclaration d'un pointeur de fonction 
   // recevant en paramètre un pointeur de fonction
   void (*myFunctionPtr)(void (*func)());
@@ -273,20 +294,24 @@ void _startPowerPac() {
   commun2_1();
   irSendPacOff = false;
   on(O_PAC);
-  cPersistantParam->set(PAC, 1);
-  filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
-  // filePowerPac->writeFile("1", "w");
-  t_start(tache_t_monoPacOn);
+#ifdef PERSISTANT_PAC  
+// A vérifier si c'est judicieux 
+//  cPersistantParam->set(PAC, 1);
+//  filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+#endif  
   t_stop(tache_t_monoPacOff);
+  t_start(tache_t_monoPacOn);
 }
 
 void _stopPowerPac() {
   commun2_1();
   t_start(tache_t_monoPacOff); // arrêt temporisé de la PAC
   irSendPacOff = true;
-  cPersistantParam->set(PAC, 0);
-  filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
-  // filePowerPac->writeFile("0", "w");
+#ifdef PERSISTANT_PAC 
+// A vérifier si c'est judicieux    
+//  cPersistantParam->set(PAC, 0);
+//  filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -899,13 +924,6 @@ void buttonFuncLevel2_4_0() {
   rotary = cDlyParam->get(LOG_STATUS);
   prepareOnOff(_logOn, _logOff);
 }
-
-// Hors ISR
-// Affichage lcd par défaut
-// Déporté dans display.cpp
-// void ioDisplay() {
-//   displayPrint1(readPortIo_O(), readPortIo_I(), TO_FONC);
-// }
 
 //--------------------------------------------------------
 //   Fonctions buttonFuncLevel2_5_X

@@ -1,6 +1,6 @@
 #ifndef LOCAL_LOOP_H
 #define LOCAL_LOOP_H
-#include <arduino.h>
+#include <Arduino.h>
 #include <esp_task_wdt.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
@@ -27,10 +27,11 @@ extern boolean bootDisplayOff;
 extern int     powerWrite;
 
 extern void (*onSingleClick)();
-extern void (*rotaryTask)();
+//extern void (*rotaryTask)();
 
 extern FileLittleFS* filePowerPac;
 extern void ioDisplay();
+extern void ioDisplay2();
 
 extern TACHE_T tache_t_monoPacOff;
 extern TACHE_T tache_t_monoPacOn;

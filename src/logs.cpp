@@ -3,6 +3,7 @@
 
 //----------------------------------------------------------
 // Mise   jour des logs
+// Basé sur l'état des ports gpio
 //----------------------------------------------------------
 void logsUpdate() {
   boolean outputState;

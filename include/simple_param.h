@@ -6,7 +6,7 @@
 */
 #ifndef SIMPLE_PARAM_H
 #define SIMPLE_PARAM_H
-#include <arduino.h>
+#include <Arduino.h>
 #include "const.h"
 
 class SimpleParam {

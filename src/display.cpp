@@ -27,7 +27,7 @@ void lcdClear() {
   lcd.clear();
 }
 /**
- * @brief Active le retro eclairage (temporisé)
+ * @brief Active le rétro eclairage (temporisé)
  * 
  */
 void backLightOn() {
@@ -37,7 +37,7 @@ void backLightOn() {
 }
 
 /**
- * @brief Coupe le retro eclairage
+ * @brief Coupe le rétro eclairage
  */
 void backLightOff() {
 #ifndef FORCE_DISPLAY
