@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.01.14";
+const String version = "2025.01.18";
 
 // #define IO_TEST
 //#define FORCE_DISPLAY

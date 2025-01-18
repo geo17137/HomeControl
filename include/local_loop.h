@@ -48,6 +48,7 @@ extern void stopWatering();
 extern void startTankFilling();
 extern void stopTankFilling();
 extern void writeLogs(const char* log);
+extern void logsWrite(const char* log);
 extern void logsUpdate();
 // void initMQTTClient();
 void localLoop();

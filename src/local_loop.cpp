@@ -193,10 +193,14 @@ void localLoop(void) {
 	}
 	//--------------------------------------------------------------------------
 	// Commande surpresseur
-	// - Si le remplissage échoue la prémère fois
+	// - Si le remplissage échoue la première fois
 	//   (timout trop faible, usure ou pompe défectueuse),
 	//   Une relance est possible par le bouton panneau elec, ou l'appli Android
 	//---------------------------------------------------------------------------
+	// Evite log en boucle;
+	static boolean bSupressorDisLog;
+	static boolean bSupressorEnLog;
+	// Ouverture du contact supresseur	
 	if (gpioState(I_SURPRESSEUR)) {
 		// Fermeture du contact supresseur
 		#ifdef DEBUG_OUTPUT
@@ -211,8 +215,17 @@ void localLoop(void) {
 			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
 		}	
 		if (cDlyParam->get(SUPRESSOR_EN)) {
+			if (!bSupressorEnLog) {
+				// Enregistrer inconditionnelement 
+				logsWrite("Surpresseur activé");
+				bSupressorEnLog = true;
+				#ifdef DEBUG_OUTPUT
+				Serial.println("Surpresseur activé");
+				#endif
+			}
 			if (!startSupressorFilling) {
 				startSupressorFilling = true;
+				bSupressorDisLog = false;
 				// Si arrosage ou remplissage en cours, privilégier le supresseur
 				// - Couper les EV (ne pas couper la pompe (limiter l'usure))
 				//   Notal : si les EV sont coupées, la pompe débite dans le réservoir du surpresseur			
@@ -236,14 +249,17 @@ void localLoop(void) {
 				t_start(tache_t_surpressorFilling);
 				on(O_POMPE);
 				writeLogs("Remplissage surpresseur");
-			}
-			else {
-				#ifdef DEBUG_OUTPUT
-				Serial.println("Surpresseur desactivé");
-				#endif
-				writeLogs("Surpresseur desactivé");					
-			}		
+			}	
 		}
+		else if (!bSupressorDisLog) {
+			#ifdef DEBUG_OUTPUT
+			Serial.println("Surpresseur désactivé");
+			#endif
+			bSupressorDisLog = true;
+			bSupressorEnLog = false;
+			// Enregistrer inconditionnelement 
+			logsWrite("Surpresseur desactivé");
+		}	
 		// Relance si erreur remplissage (monoSurpressorFilling ) commandé
 		// par bouton local panneau elec ou appli Android (msgRearm->true)
 		if (msgRearm && startSupressorFilling && !startSupressorFilling2) {	
