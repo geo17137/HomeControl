@@ -4,16 +4,15 @@
 #include "local_loop.h"
 #include "io.h"
 
-extern SimpleParam* cDlyParam;
 /*
 	Boucle exécutée toutes les secondes
-	Met à jour les messages MQTT
-	Permet au smartphone d'avoir une IHM à jour
+	Met à jour les messages MQTT pour
+	permettre à l'appli distante d'avoir une IHM à jour
 	même après une déconnexion/reconnexion
 	Gère les entrées par scrutation :
 	- télécommande arrosage, réservoir
 	- contact supresseur
-    Fourni les logs
+    Met à jour les logs
 */
 
 /**
@@ -57,7 +56,7 @@ unsigned Q_D2(int nButton) {
 }
 
 /**
- * @brief Information remplissage surpresseeur sur l'ecran LCD
+ * @brief Message remplissage surpresseur sur l'écran LCD
  */
 void lcdSupressorWaitMsg() {
 	display = nullFunc;
@@ -68,7 +67,7 @@ void lcdSupressorWaitMsg() {
 	lcdPrintString(readPortIo_I(), 3, 2, true);
 }
 /**
- * @brief Information erreur remplissage surpressur sur l'ecran LCD
+ * @brief Information erreur remplissage surpresseur sur l'écran LCD
  */
 void lcdSupressorFaultMsg() {
 	display = nullFunc;
@@ -78,7 +77,7 @@ void lcdSupressorFaultMsg() {
 	lcdPrintString(SEE_NOTICE, 2, 0, true);
 }
 /**
- * @brief Information pompe en défault sur l'écran LCD
+ * @brief Message défaut sur pompe supresseur sur l'écran LCD
  */
 void lcdPumpFault() {
 	display = nullFunc;
@@ -100,7 +99,6 @@ void reArm() {
 /**
  * @brief Signale le reboot sur l'écran LCD
  * suite à la correction erreur pompe
- * 
  */
 void lcdReboot() {
 	backLightOn();
@@ -111,14 +109,14 @@ void lcdReboot() {
 }
 
 /**
- * @brief Appelé toutes les INTERVAL_IO_SCRUT ms
+ * @brief Appelé toutes les INTERVAL_IO_SCRUT (100 ms)
  * 
  */
 void localLoop(void) {
 	// Commande manuelle arrosage
 	// Tâche la moins prioritaire
   	//  - Priorité 1 : supresseur
-  	//  - Priorité 2 : remplissage réservoir
+  	//  - Priorité 2 : remplissage irrigation réservoir
 	static boolean firstEdgeA1 = false;
 	static boolean firstEdgeA2 = true;
 	static boolean startSupressorFilling = false;
@@ -132,21 +130,18 @@ void localLoop(void) {
 	if (qd1 == 0 && !firstEdgeA2 && isWatering && !isTankFilling) {
 		firstEdgeA1 = false;
 		firstEdgeA2 = true;
-		// Serial.printf("qd1 %d\n", qd1);
 		stopWatering();
 	}
 
-	// Commande manuelle remplissage réservoir
-	// A condition que pas mise sous pression supresseur
+	// Commande manuelle remplissage irrigation réservoir
+	// à condition que pas mise sous pression supresseur
 	static boolean firstEdgeI1 = false;
 	static boolean firstEdgeI2 = true;
 	unsigned qd2 = Q_D2(I_IRRIGATION);
-	// Serial.printf("qd2 %d\n", qd2);
 	if (qd2 == 1 && !firstEdgeI1 && !isTankFilling && !startSupressorFilling) {
 		firstEdgeI1 = true;
 		firstEdgeI2 = false;
 		startTankFilling();
-		// Serial.println("startTankFilling");
 #ifdef DEBUG_OUTPUT_LOOP2
 		Serial.printf("\n%02d:%02d startTankFilling\n", h, m);
 #endif    
@@ -157,27 +152,23 @@ void localLoop(void) {
 		firstEdgeA1 = false;
     	isTankFilling = false;
 		stopTankFilling();
-		// Serial.println("stopTankFilling");
 #ifdef DEBUG_OUTPUT_LOOP2
 		Serial.printf("\n%02d:%02d stopTankFilling\n", h, m);
 #endif
 	}
 
-	// Activation écran LCD si porte panneau électrique ouvert
+	// Activation écran LCD si la porte du panneau est électrique ouverte
 	static boolean flagL;
 	static boolean flagNL = true;
 	// Lecture contact porte
 	boolean doorState = gpioState(I_LCD_CMD);
-	// Serial.println(interLcd);
 
 	if (doorState && !flagL) {
-		// Serial.println("interLcd && !flagL");
 		flagL = true;
 		flagNL = false;
 		// Force l'affichage de l'index tournant
 		isLcdDisplayOn = true;
 		// Affichage lcd sans timeout
-
 		lcd.displayOn(); // dispplayOn set backLight
 		// Temporise la durée d'affichage sur LCD
  		t_start(tache_t_backLight2);
@@ -185,35 +176,35 @@ void localLoop(void) {
 	}
 	else if (!doorState && (!flagNL || bootDisplayOff)) {
 		bootDisplayOff = false;
-		// Serial.println("interLcd && !flagL");
 		flagL = false;
 		flagNL = true;
 		electricalPanelOpen = false;
 		backLightOff();
 	}
-	//--------------------------------------------------------------------------
-	// Commande surpresseur
+  
+	//----------------------------------------------------------------------------
+	// Commande surpresseur sur fermuture contact supresseur
 	// - Si le remplissage échoue la première fois
 	//   (timout trop faible, usure ou pompe défectueuse),
-	//   Une relance est possible par le bouton panneau elec, ou l'appli Android
-	//---------------------------------------------------------------------------
+	//   Une relance est possible par le bouton sur panneau elec, ou l'appli Android
+	//------------------------------------------------------------------------------
 	// Evite log en boucle;
 	static boolean bSupressorDisLog;
 	static boolean bSupressorEnLog;
 	// Ouverture du contact supresseur	
 	if (gpioState(I_SURPRESSEUR)) {
-		// Fermeture du contact supresseur
 		#ifdef DEBUG_OUTPUT
 		Serial.printf("msgRearm=%1d, startSupressorFilling=%1d, startSupressorFilling2=%1d\n",
 						msgRearm, startSupressorFilling, startSupressorFilling2);
 		#endif
 		static boolean first = true;
-		// Reset message TOPIC_DEFAUT_SUPRESSEUR
 		if (!msgRearm && first) {
+			// Reset message TOPIC_DEFAUT_SUPRESSEUR
 			first = false;
 			// Message vers HA et appli Android
 			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
-		}	
+		}
+		// Si le surpresseur est autorisé	
 		if (cDlyParam->get(SUPRESSOR_EN)) {
 			if (!bSupressorEnLog) {
 				// Enregistrer inconditionnelement 
@@ -223,12 +214,15 @@ void localLoop(void) {
 				Serial.println("Surpresseur activé");
 				#endif
 			}
+			// Préparation mise en remplissage surpresseur 
+			// Mode normal et relance manuelle
 			if (!startSupressorFilling) {
 				startSupressorFilling = true;
 				bSupressorDisLog = false;
 				// Si arrosage ou remplissage en cours, privilégier le supresseur
-				// - Couper les EV (ne pas couper la pompe (limiter l'usure))
-				//   Notal : si les EV sont coupées, la pompe débite dans le réservoir du surpresseur			
+				// - Couper les EV (ne pas couper la pompe pour limiter l'usure)
+				//   Nota : si les EV sont coupées, la pompe débite dans le surpresseur.
+				//   Voir plan hydraulique			
 				if (isTankFilling || isWatering) {
 					isWatering = false;
 					isTankFilling = false;
@@ -242,11 +236,11 @@ void localLoop(void) {
 					if (isWatering)
 						writeLogs("Arrèt arrosage");
 				}
-				// Mettre la pompe en route  
 				lcdSupressorWaitMsg();
 				// Mise à jour dynamique du timeout
 				setDelay(tache_t_surpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
 				t_start(tache_t_surpressorFilling);
+				// Mettre systématuquement la pompe en route  
 				on(O_POMPE);
 				writeLogs("Remplissage surpresseur");
 			}	
@@ -260,8 +254,9 @@ void localLoop(void) {
 			// Enregistrer inconditionnelement 
 			logsWrite("Surpresseur desactivé");
 		}	
-		// Relance si erreur remplissage (monoSurpressorFilling ) commandé
-		// par bouton local panneau elec ou appli Android (msgRearm->true)
+		// Relance manuelle pompe sur timeout (monoSurpressorFilling coupe la pompe)
+		// Une relance autorisée
+		// Réarmement par bouton local panneau elec ou appli Android (msgRearm->true)
 		if (msgRearm && startSupressorFilling && !startSupressorFilling2) {	
 			msgRearm = false;
 			first = true;

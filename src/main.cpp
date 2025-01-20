@@ -77,7 +77,9 @@
        Persistance commande EV EST, supression mémorisation (persistance) commande PAC dans loop_prog 
        Optimisation diverses  
    Version 2025.01.13
-       Optimisation gestion surpresseur, modification messages supresseur MQTT               
+       Optimisation gestion surpresseur, modification messages supresseur MQTT    
+   Version 2025.01.18
+       Correction bug mise à jour logs supresseur                   
 */
 #include "main.h"
 #include "io.h"
@@ -172,6 +174,14 @@ const char* bootRaison() {
   }
 }
 
+/**
+ * @brief Récupère les paramètres des actions programmées et mémorisés 
+ *        dans la mémoire flash.
+ *        Instancie cParam de classe Param.
+ * @param force : initialise avec les valeurs par défaut.
+ * @return FileLittleFS* pointeur vers les fonctions fichiers
+ *         de manipulation des paramètres 
+ */
 FileLittleFS* initParam(boolean force) {
   FileLittleFS* fileParam = new FileLittleFS(PARAM_FILE_NAME);
   if (!FileLittleFS::exist(PARAM_FILE_NAME) || force) {
@@ -184,7 +194,14 @@ FileLittleFS* initParam(boolean force) {
 #endif
   return fileParam;
 }
-
+/**
+ * @brief Récupère les paramètres de temposisation et mémorisés
+ *        dans la mémoire flash.
+ *        Instancie cDlyParam de classe SimpleParam ces paramètres.
+ * @param force : initialise avec les valeurs par défaut
+ * @return FileLittleFS* pointeur vers les fonctions fichiers de manipulation
+ *         des tempos
+ */
 FileLittleFS* initDlyParam(boolean force) {
   FileLittleFS* fileDlyParam = new FileLittleFS(DLY_PARAM_FILE_NAME);
   if (!FileLittleFS::exist(DLY_PARAM_FILE_NAME) || force) {
@@ -197,7 +214,14 @@ FileLittleFS* initDlyParam(boolean force) {
 #endif
   return fileDlyParam;
 }
-
+/**
+ * @brief Récupère les paramètres de persistance mémorisés 
+ *        dans la mémoire flash.
+ *        Instancie cPersistantParam de classe SimpleParam ces paramètres.
+ * @param force : initialise avec les valeurs par défaut
+ * @return FileLittleFS* pointeur vers les fonctions fichiers de manipulation
+ *         des éléments de persistance.
+ */
 FileLittleFS* initPersitantFileDevice(boolean force) {
   FileLittleFS* filePersistantParam = new FileLittleFS(FILE_PERSISTANT_DEVICE);
   if (!FileLittleFS::exist(FILE_PERSISTANT_DEVICE) || force) {
@@ -210,7 +234,14 @@ FileLittleFS* initPersitantFileDevice(boolean force) {
 #endif
   return filePersistantParam;
 }
-
+/**
+ * @brief Récupère les paramètres de d'autorisation de programmation mémorisés 
+ *        dans la mémoire flash.
+ *        Instancie cGlobalScheduledParam de classe SimpleParam ces paramètres.
+ * @param force : initialise avec les valeurs par défaut
+ * @return FileLittleFS* pointeur vers les fonctions fichiers de manipulation
+ *         des éléments de persistance.
+ */
 FileLittleFS* initGlobalScheduledParam(boolean force) {
   FileLittleFS* fileGlobalScheduledParam = new FileLittleFS(GLOBAL_SCHEDULED_PARAM_FILE_NAME);
   if (!FileLittleFS::exist(GLOBAL_SCHEDULED_PARAM_FILE_NAME) || force) {
@@ -223,14 +254,10 @@ FileLittleFS* initGlobalScheduledParam(boolean force) {
 #endif
   return fileGlobalScheduledParam;
 }
-
-void initRotaryEncoder() {
-  rotaryEncoder.begin();
-  rotaryEncoder.setup(readEncoderISR);
-}
-
+/**
+ * @brief Mise à jour de l'heure à partir de l'heure NTP
+ */
 void initTime() {
-  // Mise à jour de l'heure à partir de l'heure NTP
   static long gmtOffset_sec = 0, daylightOffset_sec;
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
   configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
@@ -270,7 +297,7 @@ void initGpio() {
   digitalWrite(NOE_955, 1);
   pinMode(NOE_955, OUTPUT);
 
-  // Mettre les registres à zéro  
+  // Mettre les registres à décalage à zéro  
   clear74HC595();
   digitalWrite(NOE_955, 0);
   pinMode(DATA_955, OUTPUT);
@@ -325,6 +352,11 @@ void initGpio() {
 #endif
 }
 
+/**
+ * @brief Ecriture inconditionnelle des logs
+ * 
+ * @param log  message de log
+ */
 void logsWrite(const char* log) {
   char buffer[80];
   if (fileLogs->size() > MAX_LOG_SIZE)
@@ -333,6 +365,11 @@ void logsWrite(const char* log) {
   fileLogs->writeFile(buffer, "a");
 }
 
+/**
+ * @brief Ecriture conditionnelle des logs
+ * 
+ * @param log  message de log
+ */
 void writeLogs(const char* log) {
   if (cDlyParam->get(LOG_STATUS))
     logsWrite(log);
@@ -481,9 +518,12 @@ void initMQTTClient() {
   mqttClient.subscribe(TOPIC_MQTT_TEST);
 }
 
+/**
+ * @brief Point d'entrée du programme
+ */
 void setup() {
   char buffer[24];
-  // Desactiver toutes les actions tant que pas initialisé
+  // Désactiver toutes les actions tant que pas initialisé
   onRotary = nullFunc;
   onDoubleClick = nullFunc;
   onLoopTic = nullFunc;
@@ -546,7 +586,7 @@ void setup() {
   // Serial.println(__FILENAME__);
   // Serial.println(__FILE__);
 
-// Temps de lecture des infos
+  // Temps de lecture des infos
   delay(1000);
   logsWrite(bootRaison());
   // Serial.println(strlen(cParam->getStr()));
@@ -558,10 +598,10 @@ void setup() {
   server.begin();
 #endif
 
-  //----------------------------------------- Monostables -------------------------------------------------------------
+  //----------------------------------------- Init monostables ----------------------------------------------
   // ****** Pas d'accès fichier dans un monostable (kernel panic) ******
   // ****** Pas d'envois repété de messages MQTT (kernel panic)   ******
-  // Durée arrosage
+  // Durée max lance arrosage
   tache_t_watering = t_cree(monoWatering, cvrtic(cDlyParam->get(TIME_WATERING) * 1000));
   // Durée remplissage réservoir
   tache_t_tankFilling = t_cree(monoTankFilling, cvrtic(cDlyParam->get(TIME_TANK_FILLING) * 1000));
@@ -581,7 +621,7 @@ void setup() {
   tache_t_backLight2 = t_cree(monoCmdBackLight2, cvrtic(DLY_BACK_LIGHT2) * 1000);
   // Délai avant affichage par défaut
   tache_t_defaultDisplay = t_cree(monoDefaultDisplay, cvrtic(DLY_DEFAULT_SCREEN) * 1000);
-  // Durée d'ouverture de l'electrovanne déportée d'irrigation (circuit d'arriosage des tomates)
+  // Durée d'ouverture de l'électrovanne déportée d'irrigation (circuit d'arrosage des tomates)
   tache_t_offCircuit2 = t_cree(monoOffCircuit2, cvrtic(DLY_DEFAULT_OFF_CIRCUIT2) * 1000);
   // Astable reglage débit, durée d'un pas de rapport cyclique
   tache_t_monoDebit = t_cree(monoDebit, cvrtic(PAS_PERIODE_DEBIT) * 1000, pdTRUE);
@@ -639,12 +679,15 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
 
 /*
  * Monostable mise en route carte VMC
- * La carte est alimentée par la mise sous
- * temsion de la VMC. Laisse le temps à l'esp01 le temps de démarrer
+ * Fermeture relai carte VMC  après delai de mise sous tension
+ * Force VMC à plein vitesse
+ * Nota : la marche rapide de la VMC est assurée par une carte esp01s déportée.
+ * La carte esp01s déportée est alimentée par la mise sous
+ * temsion de la VMC et necessite quelques secondes pour accepter les messages MQTT
  * ACCES AUX FICHIERS NON AUTORISES
+ * UN SEUL MESSAGE MQTT A LA FOIS (débordement de la pile ISR)
  */
- // Fermeture relai carte VMC après delai de mise sous tension
- // Force VMC à plein vitesse
+
 void monoCmdVmcBoard(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("start board\n", OUTPUT_PRINT);
@@ -665,37 +708,38 @@ void monoPacOff(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("Mono Arret PAC\n", OUTPUT_PRINT);
 #endif
-// t_stop(tache_t_monoPacOff);
   off(O_PAC);
   irSendPacOff = false;
 }
 
-/*
- * Monostable mise en route de la PAC
- * Envoi d'une commande IR retardée après mise sous tension
+/**
+ * @brief  Monostable mise en route de la PAC
+ *         Envoi d'une commande IR retardée après mise sous tension
+ * @param xTimer 
  */
 void monoPacOn(TimerHandle_t xTimer) {
-//  t_stop(tache_t_monoPacOn);
   mqttClient.publish(TOPIC_PAC_IR_ON, "");
-//  mqttClient.publish(TOPIC_PAC_IR_PARAM_APPLY, "");
 }
 
-/*
- * Monostable arrêt arrosage après xx mn (règlable dans dlyParam)
+/**
+ * @brief  Monostable arrêt arrosage après xx mn (règlable dans dlyParam)
+ * @param xTimer 
  */
 void monoWatering(TimerHandle_t xTimer) {
   stopWatering();
 }
 
-/*
- * Monostable arrêt remplissage réservoir (règlable dans dlyParam)
+/**
+ * @brief  Monostable arrêt remplissage réservoir (règlable dans dlyParam)
+ * @param xTimer 
  */
 void monoTankFilling(TimerHandle_t xTimer) {
   stopTankFilling();
 }
 
-/*
- * Monostable assurant l'arrêt pompe si problème sur le surpresseur (règlable dans dlyParam)
+/**
+ * @brief Monostable assurant l'arrêt pompe si problème sur le surpresseur (règlable dans dlyParam)
+ * @param xTimer 
  */
 void monoSurpressorFilling(TimerHandle_t xTimer) {
   // t_stop(tache_t_surpressorFilling);
@@ -723,55 +767,58 @@ void monoSurpressorFilling(TimerHandle_t xTimer) {
   }
 }
 
-/*
- * Monostable assurant l'arrêt de l'EV placée sur le robinet EST (règlable dans dlyParam)
+/**
+ * @brief Monostable assurant l'arrêt de l'EV placée sur le robinet EST (règlable dans dlyParam)
  * en cas de commande hors mode programmation horaire
+ * @param xTimer
  */
 void monoCmdEvEst(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("monoCmdEvEst\n", OUTPUT_PRINT);
 #endif
-  // t_stop(tache_t_cmdEvEst);
   off(O_TRANSFO);
   off(O_EV_EST);
 }
 
-/*
- * Monostable assurant l'arrêt éclairage LCD
+/**
+ * @brief Monostable assurant l'arrêt éclairage LCD
+ * @param xTimer 
  */
+
 void monoCmdBackLight(TimerHandle_t xTimer) {
   if (!electricalPanelOpen)
     backLightOff();
-  // t_stop(tache_t_backLight);
 }
 
-/*
- * Monostable assurant l'arrêt eclairage LCD
+/**
+ * @brief Monostable assurant l'arrêt eclairage LCD
+ * @param xTimer 
  */
+
 void monoCmdBackLight2(TimerHandle_t xTimer) {
   backLightOff();
-  // t_stop(tache_t_backLight);
 }
 
-/*
- * Monostable assurant le rétablissement de l'affichage par défaut
+/**
+ * @brief Monostable assurant le rétablissement de l'affichage par défaut
+ * @param xTimer 
  */
 void monoDefaultDisplay(TimerHandle_t xTimer) {
   _ioDisplay();
-  // t_stop(tache_t_defaultDisplay);
 }
 
-/*
- * Monostable assurant la coupure de l'électrovanne du circuit2 d'irrigation
- */
-void monoOffCircuit2(TimerHandle_t xTimer) {
+/**
+ * @brief Monostable assurant la coupure de l'électrovanne du circuit2 d'irrigation
+ * @param xTimer 
+ */   
+ void monoOffCircuit2(TimerHandle_t xTimer) {
   mqttClient.publish(SUB_GPIO0_ACTION, "off");
-  // t_stop(tache_t_offCircuit2);
 }
 
-/*
- * Astable de reglage du débit l'electrovanne sud
- * Période PAS_PERIODE_DEBIT (5s)
+/**
+ * @brief Astable de reglage du débit l'electrovanne sud
+ *        Période PAS_PERIODE_DEBIT (5s)
+ * @param xTimer 
  */
 void monoDebit(TimerHandle_t xTimer) {
   int cyclcalReport = cParam->get(VANNE_EST, 3).HMin;
@@ -786,14 +833,20 @@ void monoDebit(TimerHandle_t xTimer) {
   }
   count = ++count % MAX_PAS_PERIODE_DEBIT;
 } 
-
+/**
+ * @brief commande de la vanne EST par l'astable monoDebit 
+ * 
+ */
 void onVanneEst() {
   on(O_TRANSFO);
   t_start(tache_t_monoDebit);
   // Logique inversée, utilisé pour signaler commande vanne EST
   cmdVanneEst = 0;
 }
-
+/**
+ * @brief Arrêt de la vanne EST
+ * 
+ */
 void offVanneEst() {
   // Logique inversée
   cmdVanneEst = 1;
@@ -803,10 +856,10 @@ void offVanneEst() {
 }
 
 //--------------------------------------------------------------------------------------------
-/*
- * Exécuté toutes les minutes
- * Exécute les actions temporelles programmées
- * Appelé par loop (on ne peut pas utiliser les timers RTOS (accès aux fichiers))
+/**
+ * @brief Exécuté toutes les minutes
+ *        Exécute les actions temporelles programmées dans param
+ * Appelé par loop (on ne peut pas utiliser les timers RTOS (schedule accès aux fichiers))
  */
 void schedule() {
   static boolean vmcBoardOn = false;
@@ -822,7 +875,7 @@ void schedule() {
 #ifndef TIME_SIMULATOR
   int h = rtc->getHour(true); // true -> format 24H
   int m = rtc->getMinute();
-  // Mise à jour du jours courant (persistant) utilisé pour circuit secondaire irrigation
+  // Mise à jour du jours courant (persistant) utilisé par circuit secondaire irrigation
   if (h == 0 && !flagJours) {
     flagJours = true;
     joursCircuit2++;
@@ -1285,8 +1338,7 @@ void loop() {
     localLoop();
   }
 
-  // Start rotate schedule
-  // Mise à jour de l'indicateur tournant sur le lcd toute les 500 ms
+  // Mise à jour de l'indicateur tournant sur l'écran lcd toute les 500 ms
   // isLcdDisplayOn = true;
   if (millis() - tpsRot > INTERVAL_ROTATE_DISPLAY && isLcdDisplayOn) {
     tpsRot = millis();
@@ -1322,9 +1374,9 @@ void loop() {
       return;
     long rssi = WiFi.RSSI();
     sprintf(rssi_buffer, "RSSI:%ld", rssi);
-    //mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
+    // Test niveau RSSI
+    // mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
     lcdPrintRssi(&rssi_buffer[5]);
-    // Serial.println(&rssi_buffer[5]);
   }
   // Suspend pour 5s, ne pas utiliser ici
   // esp_sleep_enable_timer_wakeup(5000000); // 5 seconds
@@ -1360,7 +1412,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_GET_PARAM ----------------------
   if (cmp(topic, TOPIC_GET_PARAM)) {
 #ifdef DEBUG_OUTPUT
-    // print(cParam->getStr(), OUTPUT_PRINT);
+    print(cParam->getStr(), OUTPUT_PRINT);
 #endif
     // Modifier la chaine param pour refléter la valeur de jours courant
     ItemParam item = cParam->get(IRRIGATION, 0);
@@ -1552,7 +1604,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     String logs = fileLogs->readFile();
     // Serial.println(logs);
     unsigned i = 0;
-    // La taille du message limitéel'implémentation de MQTT
+    // La taille du message est limitée par l'implémentation de MQTT
     // pour les ESP, il faut fractionner le message lignes/lignes
     while (i < logs.length()) {
       String partial = logs.substring(i, logs.indexOf("\n", i) + 1);

@@ -42,6 +42,8 @@ extern TACHE_T tache_t_cmdEvEst;
 extern TACHE_T tache_t_cmdVmcBoard;
 extern TACHE_T tache_t_backLight2;
 
+extern SimpleParam* cDlyParam;
+
 extern PubSubClient mqttClient;
 extern void startWatering(int timeout);
 extern void stopWatering();
