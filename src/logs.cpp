@@ -1,3 +1,29 @@
+/**
+ * @file logs.cpp
+ * @brief Implementation of log updates based on the state of GPIO ports.
+ * 
+ * This file contains the implementation of the logsUpdate function, which updates
+ * the logs based on the state of various GPIO ports. The function checks the state
+ * of each port and logs messages when the state changes.
+ * 
+ * The following GPIO ports are monitored:
+ * - O_PAC: Power control for the PAC (Pump and Compressor)
+ * - O_EV_EST: Valve control for the EST (East) irrigation
+ * - O_FOUR: Power control for the oven (Electroménager)
+ * - O_VMC: Power control for the VMC (Ventilation)
+ * - O_EV_ARROSAGE: Valve control for the arrosage (watering)
+ * - O_EV_IRRIGATION: Valve control for the irrigation
+ * 
+ * The function uses static boolean flags to keep track of the previous state of each
+ * port and logs messages when the state changes from off to on or from on to off.
+ * 
+ * The log messages are written using the writeLogs function, and debug messages are
+ * printed to the Serial output if DEBUG_OUTPUT_LOOP2 is defined.
+ * 
+ * @note The function assumes that the gpioState function is available to get the
+ *       current state of a GPIO port, and the writeLogs function is available to
+ *       write log messages.
+ */
 #include "logs.h"
 #include "io.h"
 

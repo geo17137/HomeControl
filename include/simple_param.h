@@ -1,9 +1,24 @@
-/*
-  Classe permettant de gérer les paramètres
-  représentés sous la forme "param1<motif>param2<motif>...
-  param = int
-  motif = chaine de caractères
-*/
+/**
+ * @file simple_param.h
+ * @brief Header file for the SimpleParam class.
+ * 
+ * This file contains the definition of the SimpleParam class, which is used to manage parameters
+ * represented in the form "param1<motif>param2<motif>...".
+ * 
+ * @note param = int, motif = string
+ */
+
+/**
+ * @class SimpleParam
+ * @brief A class to manage parameters represented in a specific format.
+ * 
+ * The SimpleParam class allows for the management of parameters represented in the form
+ * "param1<motif>param2<motif>...". It provides methods to get and set individual parameters,
+ * as well as to retrieve and update the entire parameter string.
+ * 
+ * @note param = int, motif = string
+ */
+
 #ifndef SIMPLE_PARAM_H
 #define SIMPLE_PARAM_H
 #include <Arduino.h>

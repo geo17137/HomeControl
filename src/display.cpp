@@ -1,3 +1,29 @@
+/**
+ * @file display.cpp
+ * @brief This file contains functions to manage the display of an ESP32-based home control system.
+ * 
+ * The functions include initialization of the display, clearing the display, controlling the backlight,
+ * printing strings and characters to the display, and displaying RSSI values.
+ * 
+ * @details
+ * - initDisplay: Initializes the display and creates custom characters.
+ * - lcdClear: Clears the display.
+ * - backLightOn: Turns on the backlight with a timer.
+ * - backLightOff: Turns off the backlight.
+ * - lcdPrintString: Prints a string to the display at a specified position.
+ * - lcdPrintChar: Prints a character to the display at a specified position.
+ * - lcdPrintRssi: Displays the RSSI value on the display.
+ * - ioDisplay: Displays default I/O information.
+ * - displayPrint1: Displays formatted output, input, and a message on the display.
+ * 
+ * @note The display is a 20x4 character LCD.
+ * @note The backlight control is conditional based on the FORCE_DISPLAY macro.
+ * @note The RSSI symbol is a custom character defined in rssi_char.
+ * 
+ * @dependencies
+ * - Arduino.h
+ * - display.h
+ */
 #include <Arduino.h>
 #include "display.h"
 

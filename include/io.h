@@ -1,11 +1,23 @@
+/**
+ * @file io.h
+ * @brief Header file for GPIO input/output operations compatible with direct GPIO port access and shift register operations on the ES32A08 board.
+ * 
+ * This file provides functions to read and write GPIO ports, handle relay states, and manage the shift register on the ES32A08 board.
+ * 
+ * @details
+ * - If ES32A08 is defined, the functions will operate on the shift register.
+ * - If ES32A08 is not defined, the functions will operate on the direct GPIO ports.
+ * 
+ * @note The ES32A08 board uses a shift register for GPIO operations.
+ * 
+ * @author Daniel
+ * @date October 2023
+ */
+
 #ifndef __IO_H
 #define __IO_H
 #include <ArduinoOTA.h>
 #include "const.h"
-
-// Entrées/sorties compatibles avec E/S directe sur les ports GPIO
-// et E/S via les registres à décalage de la carte ES32A08
-// si ES32A08 est défini
 
 extern boolean irSendPacOff;
 unsigned readByteInput();
@@ -64,8 +76,7 @@ inline const char* gpioReadPac() {
 
 /**
  * @brief Coupure relais
- * adr : numéro du port E/S ou masque
- * si ES32A08
+ * adr : numéro du port E/S ou masque si ES32A08
  * @param adr 
  */
 inline void off(int adr) {
@@ -77,8 +88,7 @@ inline void off(int adr) {
 }
 /**
  * @brief Alimentation relais
- * adr : numéro du port E/S ou masque
- * si ES32A08
+ * adr : numéro du port E/S ou masque si ES32A08
  * @param adr 
  */
 inline void on(int adr) {

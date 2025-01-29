@@ -1,3 +1,33 @@
+/**
+ * @file local_loop.cpp
+ * @brief This file contains the implementation of the local loop functions for the ESP32 Home Control Display project.
+ * 
+ * The local loop is executed every second and performs the following tasks:
+ * - Updates MQTT messages to keep the remote application interface up-to-date even after a disconnection/reconnection.
+ * - Manages inputs through polling:
+ *   - Remote control for watering and reservoir
+ *   - Supressor contact
+ * - Updates logs
+ * 
+ * Functions:
+ * - unsigned Q_D1(int nButton): D-type flip-flop command used by the RF remote control.
+ * - unsigned Q_D2(int nButton): D-type flip-flop command used by the RF remote control.
+ * - void lcdSupressorWaitMsg(): Displays the supressor filling message on the LCD.
+ * - void lcdSupressorFaultMsg(): Displays the supressor fault message on the LCD.
+ * - void lcdPumpFault(): Displays the pump fault message on the LCD.
+ * - void reArm(): Re-arms the supressor pump.
+ * - void lcdReboot(): Displays the reboot message on the LCD and restarts the ESP32.
+ * - void localLoop(void): The main local loop function called every INTERVAL_IO_SCRUT (100 ms).
+ * 
+ * The local loop function handles:
+ * - Manual watering control with priority management.
+ * - Manual irrigation reservoir filling control.
+ * - LCD activation when the electrical panel door is open.
+ * - Supressor control based on the supressor contact state.
+ * - Supressor error management.
+ * - Pump error management.
+ * - Log updates.
+ */
 #include "display.h"
 #include "mtr86.h"
 #include "simple_param.h"

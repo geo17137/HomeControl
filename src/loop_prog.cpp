@@ -1,3 +1,148 @@
+/**
+ * @file loop_prog.cpp
+ * @brief Implementation of the main loop program for the ESP32 Home Control Display.
+ * 
+ * This file contains the implementation of the main loop program for the ESP32 Home Control Display.
+ * It includes functions for handling the local human-machine interface (HMI) using a 20x4 LCD display
+ * with an I2C interface and a rotary encoder with a vertical axis that has an on/off contact for single
+ * and double click commands. The detection of clicks is done via interrupts (ISR).
+ * 
+ * The LCD interface and rotary button allow performing all actions that can be done from a smartphone,
+ * except for scheduling tasks.
+ * 
+ * General Remarks:
+ * - Each rotation of the rotary button calls the function pointed to by the onRotary function pointer.
+ * - Each press on the axis of the button calls the functions pointed to by onSingleClick and onDoubleClick
+ *   function pointers.
+ * - Functions called by the onRotary function pointer are outside the ISR context.
+ * - Functions called by the onSingleClick and onDoubleClick function pointers are within an ISR context.
+ * 
+ * Displaying Operations and States on the LCD:
+ * - Displaying on the LCD screen must be done outside the ISR context due to the I2C protocol used for
+ *   communication with the screen interface.
+ * - This prohibits using the LCD display in functions triggered by clicks, which is circumvented by a
+ *   context switch (see below).
+ * 
+ * Choosing Operations to Execute Displayed on the LCD:
+ * - Operations are chosen by a rotary encoder.
+ * - Each rotation (change in encoder value) calls the on_rotary function with the encoded value within
+ *   the range set by setBoundaries(min, max).
+ * - This value is stored in a global variable rotary, and the display is updated via a function called
+ *   by the onRotary function pointer initialized to the function to execute.
+ * - The execution context is outside the ISR (part of the loop).
+ * 
+ * Triggering Operations to Execute:
+ * - Operations are triggered by pressing the rotary button.
+ * - Two types of presses are considered: single click and double click.
+ * - Depending on the type of press, the functions pointed to by onSingleClick or onDoubleClick are called.
+ * - The execution context of these functions is within the ISR managing the clicks, prohibiting direct use
+ *   of the LCD display (due to the I2C protocol under ISR used for communication with the display).
+ * - To allow the use of the LCD display, a context switch from ISR to loop is necessary.
+ * - The context switch is done as follows:
+ *   - The called functions initialize function pointers to the task to execute, then set up a hook called
+ *     in the loop.
+ *   - This hook calls the desired function(s) via the function pointers initialized in the ISR.
+ * 
+ * Example:
+ * - The function pointer onDoubleClick receives the function to call on a double click as a parameter.
+ * - onDoubleClick = loopTicParam; // loopTicParam() will be called on doubleClick
+ * 
+ * - Declaration of the function pointer used by loopTicParam:
+ *   void (*funcToCall)();
+ * 
+ * - Called by onDoubleClick:
+ *   void loopTicParam() {
+ *     void (*myFunctionPtr)(void (*function)());
+ *     myFunctionPtr = &loopTic;
+ *     (*myFunctionPtr)(funcToCall);
+ *   }
+ * 
+ * - This function declares a function pointer *myFunctionPtr receiving a function pointer *function as a parameter.
+ * - myFunctionPtr is initialized with the address of loopTic.
+ * - loopTic must be a function receiving a function pointer as a parameter:
+ *   void loopTic(void (*function)())
+ * 
+ * - loopTic is then called by (*myFunctionPtr)(funcToCall) with the address of a function funcToCall.
+ * - loopTic assigns this value to the hook: onLoopTic = function
+ * 
+ * - In the loop, the hook onLoopTic() calls funcToCall.
+ * 
+ * Example:
+ * - funcToCall = myFunc;
+ * - onDoubleClick = loopTicParam;
+ * - doubleClick on the rotary button
+ * - loopTicParam() -> loopTic(func) => sets up the hook
+ * - In the loop:
+ *   void loop {
+ *     ...
+ *     onLoopTic(); // calls myFunc
+ *     ...
+ *   }
+ * 
+ * - Once used, the hook is nullified by pointing onLoopTic to an empty function:
+ *   onLoopTic = nullFunc;
+ * 
+ *   void nullFunc() {
+ *   }
+ * 
+ * Note:
+ * - To execute various functions (with parameter passing) on the same onRotary function call,
+ *   the same mechanism is used without requiring a hook in the loop [onRotary is outside ISR].
+ * - It is sufficient to point onRotary to different functions as needed.
+ * 
+ * Functions:
+ * - nullFunc: Used to nullify hooks in the loop.
+ * - readPortIo_O: Concatenates output ports into a string for display on the first line of the LCD.
+ * - testPortIO_O: Detects state changes on output ports to trigger display updates.
+ * - readPortIo_I: Reads the status of three GPIO inputs and formats them into a string.
+ * - testPortIO_I: Reads the state of three GPIO pins and combines their values into a single unsigned integer.
+ * - resetDlyDefaultDisplay: Resets the default display delay.
+ * - loopTicParam: Resets the default display delay and calls another function via a function pointer.
+ * - loopTicParam2: Executes the loopTic2 function by using a function pointer.
+ * - commun2_1: Common function called by buttonFuncLevel2_1_X functions.
+ * - _startWatering, _stopWatering, _startIrrigation, _stopIrrigation, _startPowerCooking, _stopPowerCooking,
+ *   _startVMC, _stopVMC, _startWateringLemon, _stopWateringLemon, _startPowerPac, _stopPowerPac: Functions
+ *   called by buttonFuncLevel2_1_X functions.
+ * - _ioDisplay: Returns to the default display.
+ * - _ioDisplayAndValidateDlyParam: Returns to the default display after setting timer parameters.
+ * - reboot: Reboots the ESP32.
+ * - _reboot: Sets onLoopTic to reboot.
+ * - _summerTimeOn, _summerTimeOff: Functions called by buttonFuncLevel2_3_X functions.
+ * - _logOn, _logOff: Functions called by buttonFuncLevel2_4_X functions.
+ * - updateScheduledGlobalParam: Updates scheduled global parameters.
+ * - _enablePowerCookSched, _disablePowerCookSched, _enableIrrigationSched, _disableIrrigationSched,
+ *   _enableLemonWaterringSched, _disableLemonWaterringSched, _enablePowerPacSched, _disablePowerPacSched,
+ *   _enableVmcSched, _disableVmcSched: Functions called by buttonFuncLevel2_5_X functions.
+ * - apply: Common function called by buttonFuncLevel2_2_X functions.
+ * - setParamWatering, setParamTankFilling, setParamLemonWaterring, setParamSuppressorFilling: Functions
+ *   called by buttonFuncLevel2_2_X functions.
+ * - encoderSetTime: Sets up the encoder to handle time setting with single and double click actions.
+ * - encoderOutputTask2: Handles the encoder output task with specified functions for on and off states.
+ * - encoderOutputTask: Task to handle encoder output and update display accordingly.
+ * - encoderScheduledActionTask: Handles the encoder scheduled action task.
+ * - encoderLogSettingsTask: Handles the encoder log settings task.
+ * - encoderTimeSummerTask: Task function to handle the encoder time summer logic.
+ * - encoderTimerTask: Task function to handle the encoder timer logic.
+ * - encoderLevel0Task: Handles the encoder level 0 task.
+ * - on_rotary: Updates the encoded value and calls the function pointed to by onRotary.
+ * - loopTic: Prepares the context switch by setting up a function pointer used in the loop.
+ * - loopTic2: Prepares the context switch by setting up a function pointer used in the loop.
+ * - buttonFuncLevel0: Entry point called by displayPrint1 on rotary button press.
+ * - communFuncLevel1: Executes a function within specified boundaries and sets up rotary encoder handling.
+ * - buttonFuncLevel1_1, buttonFuncLevel1_2, buttonFuncLevel1_3, buttonFuncLevel1_4, buttonFuncLevel1_5:
+ *   Functions called by the main menu.
+ * - buttonFuncParam: Allows passing two parameters to a function pointer.
+ * - prepareOnOff: Prepares the on/off functions and initializes the encoder.
+ * - buttonFuncLevel2_1_0, buttonFuncLevel2_1_1, buttonFuncLevel2_1_2, buttonFuncLevel2_1_3, buttonFuncLevel2_1_4,
+ *   buttonFuncLevel2_1_5: Functions called by the second level menu for on/off commands.
+ * - prepareTimerSet: Prepares the timer settings and initializes the encoder.
+ * - buttonFuncLevel2_2_0, buttonFuncLevel2_2_1, buttonFuncLevel2_2_2, buttonFuncLevel2_2_3: Functions called by
+ *   the second level menu for timer settings.
+ * - buttonFuncLevel2_3_0: Function called by the second level menu for summer/winter time settings.
+ * - buttonFuncLevel2_4_0: Function called by the second level menu for log settings.
+ * - buttonFuncLevel2_5_0, buttonFuncLevel2_5_1, buttonFuncLevel2_5_2, buttonFuncLevel2_5_3, buttonFuncLevel2_5_4:
+ *   Functions called by the second level menu for scheduled actions.
+ */
 #include "loop_prog.h"
 #include "io.h"
 
@@ -108,7 +253,8 @@
      ...
    }
 
-  Une fois utilisé, le crochet est annihilé par en faisant pointer onLoopTic
+  Une fois utilisé, le crochet est annihilé
+   en faisant pointer onLoopTic
   sur une fonction vide :
     onLoopTic = nullFunc
 
@@ -122,7 +268,7 @@
 
 */
 
-// Utilisé pour annihiler les crochets
+// Utilisé pour annihiler les crochets dans loop()
 void nullFunc() {
 }
 
@@ -162,19 +308,34 @@ unsigned testPortIO_O() {
   (ugpioRead(O_EV_EST) << 6);
 }
 
-// Concatène les ports d'entrée dans une chaine
-// Appelé dans dans loop via display()
-// Nota l'entrée E4 de l'interface opto est utilisée
-// pour autoriser l'affichage (non affichée)
+/**
+ * @brief Reads the status of three GPIO inputs and formats them into a string.
+ *
+ * This function reads the status of three GPIO inputs (I_ARROSAGE, I_IRRIGATION, I_SURPRESSEUR)
+ * and formats their values into a single string. The formatted string contains the values
+ * of the three inputs in the format "E1:<value> E2:<value> E3:<value>".
+ * Appelé dans dans loop via display()
+ *  Nota l'entrée E4 de l'interface opto est utilisée
+ * pour autoriser l'affichage (non affichée)
+ * @return A pointer to a static character array containing the formatted string.
+ */
 char* readPortIo_I() {
   static char str[31];
   sprintf(str, "E1:%s E2:%s E3:%s", n0gpioRead(I_ARROSAGE), n0gpioRead(I_IRRIGATION), n0gpioRead(I_SURPRESSEUR));
   return str;
 }
+
 /**
- * @brief Utilisé pour détecter les changements d'état sur les ports d'entrée
- *        afin de déclencher l'affichage.
- * @return unsigned 
+ * @brief Reads the state of three GPIO pins and combines their values into a single unsigned integer.
+ *
+ * This function reads the state of three specific GPIO pins (I_ARROSAGE, I_IRRIGATION, and I_SURPRESSEUR)
+ * and combines their values into a single unsigned integer. Each pin's state is represented by a single bit
+ * in the returned integer:
+ * - Bit 0: State of I_ARROSAGE
+ * - Bit 1: State of I_IRRIGATION
+ * - Bit 2: State of I_SURPRESSEUR
+ *
+ * @return An unsigned integer representing the combined state of the three GPIO pins.
  */
 unsigned testPortIO_I() {
   return ugpioRead(I_ARROSAGE) + (ugpioRead(I_IRRIGATION) << 1) + (ugpioRead(I_SURPRESSEUR) << 2);
@@ -186,8 +347,14 @@ inline void resetDlyDefaultDisplay() {
 }
 
 /**
- * @brief Permet de passer un paramètre à un pointeur de fonction
- *  Appelé selon les besoins par onSignelClick ou onDoubleClick()
+ * @brief Function to reset the default display delay and call another function via a function pointer.
+ * Permet de passer un paramètre à un pointeur de fonction
+ * Appelé selon les besoins par onSignelClick ou onDoubleClick()
+ * This function first resets the default display delay by calling `resetDlyDefaultDisplay()`.
+ * It then declares a function pointer `myFunctionPtr` that points to a function taking another function pointer as a parameter.
+ * The `myFunctionPtr` is assigned to point to the `loopTic` function.
+ * Finally, it calls the function pointed to by `myFunctionPtr`, passing `funcToCall` as the parameter.
+ * @note Ensure that loopTic and funcToCall are defined and accessible in the scope
  */
 void loopTicParam() {
   resetDlyDefaultDisplay(); 
@@ -195,15 +362,21 @@ void loopTicParam() {
   // recevant en paramètre un pointeur de fonction
   void (*myFunctionPtr)(void (*func)());
   // Pointer le pointeur de fonction sur la fonction à appeler
+  // loopTic prend en paramètre un pointeur de fonction
   myFunctionPtr = &loopTic;
   // Appeler la fonction via le pointeur en lui passant une adresse de fonction
   (*myFunctionPtr)(funcToCall);
 }
 
 /**
- * @brief Permet de passer un paramètre à un pointeur de fonction
- *  Appelé par onSingleClick() dans encoderOutputTask2
+ * @brief Executes the loopTic2 function by using a function pointer.
  * 
+ * This function resets the default display delay and then declares a function pointer
+ * that takes another function pointer as a parameter. It assigns the loopTic2 function
+ * to the function pointer and calls it, passing funcToCall2 as the argument.
+ * Appelé par onSingleClick() dans encoderOutputTask2
+ * @note Ensure that loopTic2 and funcToCall2 are defined and accessible in the scope
+ * where this function is called.
  */
 void loopTicParam2() {
   resetDlyDefaultDisplay(); 
@@ -223,7 +396,7 @@ void loopTicParam2() {
 //-------------------------------------------
 
 //-------------------------------------------
-// Fonctions applées par buttonFuncLevel2_1_X
+// Fonctions appelées par buttonFuncLevel2_1_X
 //-------------------------------------------
 void commun2_1() {
   display = nullFunc;
@@ -472,6 +645,16 @@ void setParamSuppressorFilling() {
 
 //--------------------------------------------------------
 
+/**
+ * @brief Sets up the encoder to handle time setting with single and double click actions.
+ * 
+ * This function configures the encoder to display the maximum time and sets up the actions
+ * to be performed on single and double clicks. It updates the LCD display with relevant
+ * messages and sets the callback functions for single and double click events.
+ * 
+ * @param funcToCallOnSingleClick Function to be called when a single click is detected.
+ * @param funcToCallOnDoubleClick Function to be called when a double click is detected.
+ */
 void encoderSetTime(void (*funcToCallOnSingleClick)(), void (*funcToCallOnDoubleClick)()) {
   onLoopTic = nullFunc;
   // Serial.println(rotary);
@@ -488,6 +671,16 @@ void encoderSetTime(void (*funcToCallOnSingleClick)(), void (*funcToCallOnDouble
   onDoubleClick = funcToCallOnDoubleClick;
 }
 
+/**
+ * @brief Handles the encoder output task with specified functions for on and off states.
+ *
+ * This function sets up the display messages and assigns the appropriate functions
+ * to be called based on the rotary encoder's state. It updates the display with
+ * instructions and sets the function pointers for single and double click actions.
+ *
+ * @param funcOn Function to be called when the rotary encoder is in the "on" state.
+ * @param funcOff Function to be called when the rotary encoder is in the "off" state.
+ */
 void encoderOutputTask2(void (*funcOn)(), void (*funcOff)()) {
   onLoopTic = nullFunc;
   lcdPrintString(Dbl_Push_to_validate, 0, 0, true);
@@ -508,6 +701,22 @@ void encoderOutputTask2(void (*funcOn)(), void (*funcOff)()) {
   }
 }
 
+/**
+ * @brief Task to handle encoder output and update display accordingly.
+ *
+ * This function sets the `onLoopTic` to `nullFunc` and prints a message on the LCD
+ * based on the current rotary position. It also sets the `onSingleClick` function
+ * to `loopTicParam` and updates the `funcToCall` based on the rotary position.
+ *
+ * The rotary positions and corresponding functions are:
+ * - 0: `buttonFuncLevel2_1_0`
+ * - 1: `buttonFuncLevel2_1_1`
+ * - 2: `buttonFuncLevel2_1_2`
+ * - 3: `buttonFuncLevel2_1_3`
+ * - 4: `buttonFuncLevel2_1_4`
+ * - 5: `buttonFuncLevel2_1_5`
+ * - 6: `_ioDisplay`
+ */
 void encoderOutputTask() {
   onLoopTic = nullFunc;
   lcdPrintString(msgSetOutput[rotary], 2, 0, true);
@@ -539,6 +748,23 @@ void encoderOutputTask() {
   }
 }
 
+/**
+ * @brief Executes the scheduled action based on the current rotary encoder position.
+ *
+ * This function is called to handle the scheduled action when the rotary encoder is used.
+ * It performs the following steps:
+ * 1. Sets the `onLoopTic` function to `nullFunc`.
+ * 2. Prints a message corresponding to the current rotary position on the LCD.
+ * 3. Sets the `onSingleClick` function to `loopTicParam`.
+ * 4. Based on the current rotary position, assigns the appropriate function to `funcToCall`.
+ *
+ * The rotary encoder positions correspond to the following actions:
+ * - Position 0: Calls `buttonFuncLevel2_5_0`.
+ * - Position 1: Calls `buttonFuncLevel2_5_1`.
+ * - Position 2: Calls `buttonFuncLevel2_5_2`.
+ * - Position 3: Calls `buttonFuncLevel2_5_3`.
+ * - Position 4: Calls `buttonFuncLevel2_5_4`.
+ */
 void encoderScheduledActionTask() {
   onLoopTic = nullFunc;
   lcdPrintString(msgScheduledAction[rotary], 2, 0, true);
@@ -576,6 +802,22 @@ void encoderLogSettingsTask() {
   }
 }
 
+/**
+ * @brief Task function to handle the encoder time summer logic.
+ *
+ * This function is responsible for updating the display with the summer time message
+ * based on the current rotary encoder position. It also sets the appropriate function
+ * to be called on a single click event.
+ *
+ * The function performs the following actions:
+ * - Sets the `onLoopTic` function pointer to `nullFunc`.
+ * - Prints the summer time message corresponding to the current rotary position on the LCD.
+ * - Sets the `onSingleClick` function pointer to `loopTicParam`.
+ * - Based on the current rotary position, sets the `funcToCall` function pointer to the
+ *   appropriate function.
+ *
+ * @note The `rotary` variable is used to determine the current position of the rotary encoder.
+ */
 void encoderTimeSummerTask() {
   onLoopTic = nullFunc;
   lcdPrintString(msgSummerTm[rotary], 2, 0, true);
@@ -618,6 +860,26 @@ void encoderTimerTask() {
 //--------------------------------------------------------
 // Premier niveau de menu
 //--------------------------------------------------------
+/**
+ * @brief Handles the encoder level 0 task.
+ * 
+ * This function updates the LCD display without a timeout, blocks the rotation of the index,
+ * and sets the appropriate function to call based on the current rotary value.
+ * 
+ * The function performs the following actions:
+ * - Stops the backlight timeout task.
+ * - Turns on the LCD display.
+ * - Prints selection and validation messages on the LCD.
+ * - Sets the single click action to loopTicParam.
+ * - Based on the rotary value, sets the function to call:
+ *   - 0: Force output (buttonFuncLevel1_1)
+ *   - 1: Set timer parameters (buttonFuncLevel1_2)
+ *   - 2: Set scheduled actions (buttonFuncLevel1_5)
+ *   - 3: Daylight time offset (buttonFuncLevel1_3)
+ *   - 4: Log settings (buttonFuncLevel1_4)
+ *   - 5: Reboot (_reboot)
+ *   - 6: Quit (_ioDisplay)
+ */
 void encoderLevel0Task() {
   // Affichage lcd sans timeout
   t_stop(tache_t_backLight2);
@@ -712,6 +974,17 @@ void buttonFuncLevel0() {
 
 // Détermine la plage de l'encodeur et
 // la fonction func à executer
+/**
+ * @brief Executes a function within specified boundaries and sets up rotary encoder handling.
+ *
+ * This function sets up the environment by initializing the loop tick function to a null function,
+ * setting the boundaries, resetting the encoder, and initializing the rotary variable. It then
+ * executes the provided function and sets up the rotary encoder to call the provided function on
+ * rotary events.
+ *
+ * @param h_boundarie The upper boundary value to be set.
+ * @param func A pointer to the function to be executed and set for rotary events.
+ */
 void communFuncLevel1(int h_boundarie, void (*func)()) {
   onLoopTic = nullFunc;
   setBoundaries(0, h_boundarie);
@@ -825,10 +1098,22 @@ void buttonFuncLevel2_1_5() {
 }
 
 //--------------------------------------------------------
-//   Fonctions commune aux buttonFuncLevel2_2_X
-//   Prépare l'appel au paramètrage (hors ISR)
+//   Fonctions commune (hors ISR) aux buttonFuncLevel2_2_X
+//   Prépare l'appel au paramètrage 
 //--------------------------------------------------------
 
+/**
+ * @brief Prepares the timer settings and initializes the encoder.
+ *
+ * This function sets the boundaries for the timer, initializes the encoder with the current value,
+ * and assigns the provided callback functions for the encoder.
+ *
+ * @param min The minimum value for the timer.
+ * @param max The maximum value for the timer.
+ * @param currentValue The current value to set the encoder to.
+ * @param func1 A pointer to the first callback function to be used by the encoder.
+ * @param func2 A pointer to the second callback function to be used by the encoder.
+ */
 void prepareTimerSet(int min, int max,
   unsigned currentValue,
   void (*func1)(), void (*func2)()) {

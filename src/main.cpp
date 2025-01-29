@@ -1,86 +1,104 @@
 
-/*
-   Automate ESP32 remplaçant le ZELIO
-   ******************************************************
-   IMPORTANT Si la taille des messages dépasse 256 octets
-   modifier dans la librairie PubSubClient.h
-   La chaine param fait actuellement 279 octets
-   MQTT_MAX_PACKET_SIZE = 300 est insuffisant !!
-   #define MQTT_MAX_PACKET_SIZE 256
-   par
-   #define MQTT_MAX_PACKET_SIZE 512
-   ou appeler setBufferSize(MQTT_MAX_BUFFER_SIZE);
-   Solution adoptée dans initMQTTClient() 
-   
-   Definir CONFIG_ARDUINO_LOOP_STACK_SIZE 8192 
-   dans
-   .platformio\packages\framework-arduinoespressif32\tools\sdk\esp32\dio_qspi\include
-   Voir
-   https://community.platformio.org/t/esp32-stack-configuration-reloaded/20994/2
-   
-   ******************************************************
-   Versions: 31/3/23
-    - Encapsulation des variables chaines globales de paramétrage
-    - Unification des classe de paramétrage Dlyparam, Persistant et GlobalScheduledParam dans SimpleParam
-    - Augmentation de la taille de la pile
-    - Unification de l'envoi des logs (nouveau fichier logs.cpp)
-    - Logs sur perte de WiFi
-   Version 2.6.5 3/9/23
-    - Configuration dynamique des monostables arrosage, remplissage réservoir, irrigation vanne est
-   Version 2.6.6 11/9/23
-    - Correction mineure dans les messages de loopProg
-   Version 2.7.0 27/10/23
-    - Utilisation de la librairie LittleFS Intégrée au noyau
-   Version 2.8.0 30/10/23
-    - Réduction de l'allumage lcd lors des reboot
-    - Timeout de l'allumage lcd lorsque le panneau electrique est ouvert
-   Version 2.9.0 30/11/23
-    - Remplacement contacteur PAC ferme au repos par contacteur ouvert au repos
-      inversion de la logique de commande de la PAC
-    - Correction d'un bug bloquant la maj de l'affichage local (variable tpsProg mise à jour dans loop test wifi)
-   Version 2.9.1 08/1/24
-    - Force l'affichage par definition du symbole FORCE_DISPLAY
-      Necessite une recompilation
-   Version 2.9.2 28/3/24
-    - INTERVAL_RESET_WDT  100 -> 500
-    // _ INTERVAL_WIFI_TEST 60*1000 -> 3*60*1000
-   Version 2.10.0 12/5/24
-    - Ajout du regagle de débit vanne est par regalge du rapport cyclique on/off
-   Version 3.0.0 9/6/24
-    - Génération d'une version pour carte ES32A08 en definissant ES32A08 dans const.h
-    - Regrouppement de toutes les E/S gpio dans io.cpp
-   Version 2024.6.22
-    - Changment numérotation version
-    - Affichage rssi sur l'écran lcd et envoi de message mqtt homecontrol/wifi_streng
-   Version 2024.6.25
-    - Possibilité de bloquer le remplissage du supresseur
-   Version 2024.6.25
-    - Test périodique d'envoi de messages mqtt. En cas de non réponse reboot
-   Version 2024.9.19
-    - Correction bug :
-      commande PAC depuis la console 
-      commande arrosage et irrigation avec la télécommande 
-   Version 2024.9.20
-      regroupement des messages lcd
-      correction bug mineurs 
-   Version 2024.10.15
-      envoi de message on/off homecontrol/status_cuisine lors des commandes 
-   Version 2024.12.31
-       modification monostable commande vmc  
-   Version 2025.01.04
-       optimisation de la fonction schedule   
-   Version 2025.01.07
-       Optimisation de l'affichage des capteurs et actionneurs                 
-   Version 2025.01.09
-       Signale séquence d'arrêt de la PAC sur l'écran LCD (K2 ->0->1->0..) 
-   Version 2025.01.11
-       Persistance commande EV EST, supression mémorisation (persistance) commande PAC dans loop_prog 
-       Optimisation diverses  
-   Version 2025.01.13
-       Optimisation gestion surpresseur, modification messages supresseur MQTT    
-   Version 2025.01.18
-       Correction bug mise à jour logs supresseur                   
-*/
+/**
+ * @file main.cpp
+ * @brief Automate ESP32 remplaçant le ZELIO
+ * 
+ * Ce fichier contient le code pour un automate basé sur ESP32 qui remplace un ZELIO.
+ * 
+ * @details
+ * IMPORTANT: Si la taille des messages dépasse 256 octets, modifier dans la librairie PubSubClient.h
+ * La chaine param fait actuellement 279 octets. MQTT_MAX_PACKET_SIZE = 300 est insuffisant !!
+ * #define MQTT_MAX_PACKET_SIZE 256 par #define MQTT_MAX_PACKET_SIZE 512 ou appeler setBufferSize(MQTT_MAX_BUFFER_SIZE);
+ * Solution adoptée dans initMQTTClient().
+ * 
+ * Définir CONFIG_ARDUINO_LOOP_STACK_SIZE 8192 dans .platformio\packages\framework-arduinoespressif32\tools\sdk\esp32\dio_qspi\include
+ * Voir https://community.platformio.org/t/esp32-stack-configuration-reloaded/20994/2
+ * 
+ * @version 31/3/23
+ * - Encapsulation des variables chaines globales de paramétrage
+ * - Unification des classes de paramétrage Dlyparam, Persistant et GlobalScheduledParam dans SimpleParam
+ * - Augmentation de la taille de la pile
+ * - Unification de l'envoi des logs (nouveau fichier logs.cpp)
+ * - Logs sur perte de WiFi
+ * 
+ * @version 2.6.5 3/9/23
+ * - Configuration dynamique des monostables arrosage, remplissage réservoir, irrigation vanne est
+ * 
+ * @version 2.6.6 11/9/23
+ * - Correction mineure dans les messages de loopProg
+ * 
+ * @version 2.7.0 27/10/23
+ * - Utilisation de la librairie LittleFS Intégrée au noyau
+ * 
+ * @version 2.8.0 30/10/23
+ * - Réduction de l'allumage lcd lors des reboot
+ * - Timeout de l'allumage lcd lorsque le panneau electrique est ouvert
+ * 
+ * @version 2.9.0 30/11/23
+ * - Remplacement contacteur PAC ferme au repos par contacteur ouvert au repos
+ * - Inversion de la logique de commande de la PAC
+ * - Correction d'un bug bloquant la maj de l'affichage local (variable tpsProg mise à jour dans loop test wifi)
+ * 
+ * @version 2.9.1 08/1/24
+ * - Force l'affichage par definition du symbole FORCE_DISPLAY
+ * - Necessite une recompilation
+ * 
+ * @version 2.9.2 28/3/24
+ * - INTERVAL_RESET_WDT 100 -> 500
+ * - INTERVAL_WIFI_TEST 60*1000 -> 3*60*1000
+ * 
+ * @version 2.10.0 12/5/24
+ * - Ajout du reglage de débit vanne est par reglage du rapport cyclique on/off
+ * 
+ * @version 3.0.0 9/6/24
+ * - Génération d'une version pour carte ES32A08 en definissant ES32A08 dans const.h
+ * - Regroupement de toutes les E/S gpio dans io.cpp
+ * 
+ * @version 2024.6.22
+ * - Changement numérotation version
+ * - Affichage rssi sur l'écran lcd et envoi de message mqtt homecontrol/wifi_streng
+ * 
+ * @version 2024.6.25
+ * - Possibilité de bloquer le remplissage du supresseur
+ * 
+ * @version 2024.6.25
+ * - Test périodique d'envoi de messages mqtt. En cas de non réponse reboot
+ * 
+ * @version 2024.9.19
+ * - Correction bug : commande PAC depuis la console, commande arrosage et irrigation avec la télécommande
+ * 
+ * @version 2024.9.20
+ * - Regroupement des messages lcd
+ * - Correction de bugs mineurs
+ * 
+ * @version 2024.10.15
+ * - Envoi de message on/off homecontrol/status_cuisine lors des commandes
+ * 
+ * @version 2024.12.31
+ * - Modification monostable commande vmc
+ * 
+ * @version 2025.01.04
+ * - Optimisation de la fonction schedule
+ * 
+ * @version 2025.01.07
+ * - Optimisation de l'affichage des capteurs et actionneurs
+ * 
+ * @version 2025.01.09
+ * - Signale séquence d'arrêt de la PAC sur l'écran LCD (K2 ->0->1->0..)
+ * 
+ * @version 2025.01.11
+ * - Persistance commande EV EST, suppression mémorisation (persistance) commande PAC dans loop_prog
+ * - Optimisations diverses
+ * 
+ * @version 2025.01.13
+ * - Optimisation gestion surpresseur, modification messages supresseur MQTT
+ * 
+ * @version 2025.01.18
+ * - Correction bug mise à jour logs supresseur
+ * 
+ * @version 2025.01.18.1
+ * - Mise à jour de la documentation
+ */
 #include "main.h"
 #include "io.h"
 
