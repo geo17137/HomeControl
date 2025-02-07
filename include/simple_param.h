@@ -41,33 +41,43 @@ public:
    * @param nParam nombre de paramètres dans str
    */
   SimpleParam(const char* str, const char* motif, unsigned nParam);
+
+  ~SimpleParam();
+
   /**
    *@brief Get param
    * 
    * @param nParam numéro du paramètre
    * @return int valeur du paramtre
    */
+
   int get(int nParam);
+
   /**
    *@brief modifie un paramètre
    * 
    * @param nParam  numéro du paramètre
    * @param val   valeur du paramètre
    */
+
   void set(int nParam, int val);
   /**
    *@brief Get the Str param
    * 
    * @return char* 
    */
+  
   char* getStr();
   /**
    *@brief Set the Str param
    * 
    * @param str str param
    */
+  
   void  setStr(const char* str);
+  
   void  print();
+
 private:
   void  split();
   int   update();

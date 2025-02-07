@@ -98,6 +98,9 @@
  * 
  * @version 2025.01.18.1
  * - Mise à jour de la documentation
+ *  
+ * @version 2025.02.27
+ * - Ajout d'un destructeur pour les objets simpleParam
  */
 #include "main.h"
 #include "io.h"
@@ -213,7 +216,7 @@ FileLittleFS* initParam(boolean force) {
   return fileParam;
 }
 /**
- * @brief Récupère les paramètres de temposisation et mémorisés
+ * @brief Récupère les paramètres de temposisation mémorisés
  *        dans la mémoire flash.
  *        Instancie cDlyParam de classe SimpleParam ces paramètres.
  * @param force : initialise avec les valeurs par défaut
@@ -802,7 +805,6 @@ void monoCmdEvEst(TimerHandle_t xTimer) {
  * @brief Monostable assurant l'arrêt éclairage LCD
  * @param xTimer 
  */
-
 void monoCmdBackLight(TimerHandle_t xTimer) {
   if (!electricalPanelOpen)
     backLightOff();
@@ -812,7 +814,6 @@ void monoCmdBackLight(TimerHandle_t xTimer) {
  * @brief Monostable assurant l'arrêt eclairage LCD
  * @param xTimer 
  */
-
 void monoCmdBackLight2(TimerHandle_t xTimer) {
   backLightOff();
 }
@@ -1334,6 +1335,7 @@ void loop() {
     // testPortIO_0() calcule la somme des bits IO en 
     // tenant compte de leur poids
     unsigned uPortOut_0 = testPortIO_O();
+    
     if (uPortOut_1 != uPortOut_0) {
       uPortOut_1 = uPortOut_0;
       display();
@@ -1341,6 +1343,7 @@ void loop() {
 
     // Ne mettre à jour l'affichage que si changement
     unsigned uPortIn_0 = testPortIO_I();
+   
     if (uPortIn_1 != uPortIn_0) {
       uPortIn_1 = uPortIn_0;
       display();
@@ -1407,7 +1410,7 @@ void loop() {
 /**
  *@brief  Réception des messages MQTT
  *        Attention si le buffer MQTT est trop petit le message correspondant est
- *        supprimé. Voir commantaire en-tête de ce fichier
+ *        supprimé. Voir commentaires en-tête de ce fichier
  * 
  * @param topic 
  * @param payload 
@@ -1415,7 +1418,7 @@ void loop() {
  */
 void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   String strPayload = "";
-  // boolean cmdVanneEst;
+
 #ifdef DEBUG_OUTPUT
   char buffer[80];
 #endif

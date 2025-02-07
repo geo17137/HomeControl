@@ -49,7 +49,7 @@
 #include "local_loop.h"
 #include "const.h"
 #include "../secret/password.h"
-
+//#include <Preferences.h>
 // WiFi and MQTT credentials
 const char *mqttServer = MQTT_SERVER;
 const int  mqttPort = MQTT_PORT;
@@ -69,46 +69,46 @@ static int m;
 
 // Parameter string for 24-hour scheduled cycles
 const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
-                                   "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
-                                   "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
-                                   "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
-                                   "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00";
+                    "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
+                    "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
+                    "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:"
+                    "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00";
 
 // LCD display progress indicators
 const char progress[3] = {'-', '|', '/'};
 
 // Messages for rotary button actions
-const char* msgRotary[7] = {   "-Force output",
-                                                    "-Set timer param",
-                                                    "-Set scheduled act.", 
-                                                    "-Daylight timeOffset",
-                                                    "-Log setting",
-                                                    "-Reboot", 
-                                                    "-Quit"};
+const char* msgRotary[7] = {"-Force output",
+                            "-Set timer param",
+                            "-Set scheduled act.", 
+                            "-Daylight timeOffset",
+                            "-Log setting",
+                            "-Reboot", 
+                            "-Quit"};
 
 // Messages for setting outputs
 const char* msgSetOutput[7] = {"-Watering lance",
-                                                    "-Irrigation tank",
-                                                    "-Cooking devices",
-                                                    "-VMC power",
-                                                    "-Watering lemon tree",
-                                                    "-Power Heat pump",
-                                                    "-Quit"};
+                               "-Irrigation tank",
+                               "-Cooking devices",
+                               "-VMC power",
+                               "-Watering lemon tree",
+                               "-Power Heat pump",
+                               "-Quit"};
 
 // On/Off messages
-const char* msgOnOff[2] = {   "-On",
-                                                   "-Off"};
+const char* msgOnOff[2] = {"-On",
+                           "-Off"};
 
 // Yes/No messages
 const char* msgYesNo[2] = {"-Yes",
-                                             "-No"};
+                           "-No"};
 
 // Timer duration messages
 const char* msgTimer[5] =    {"-Time wattering",
-                                                   "-Tank filling time",
-                                                   "-Lemon watering tm",
-                                                   "-Supres. filling tm",
-                                                   "-Quit"};
+                              "-Tank filling time",
+                              "-Lemon watering tm",
+                              "-Supres. filling tm",
+                              "-Quit"};
 
 // Summer time activation message
 const char* msgSummerTm[1] = {"-Summer time ?"};
@@ -117,12 +117,11 @@ const char* msgSummerTm[1] = {"-Summer time ?"};
 const char* msgLogSetting[1] = {"-Log setting ?"};
 
 // Scheduled action messages
-const char* msgScheduledAction[5] =
-                                                 { "-Power cook schedule",
-                                                   "-Irrigation schedule",
-                                                   "-Lemon water schedul",
-                                                   "-Power PAC schedule", 
-                                                   "-VMC schedule"};
+const char* msgScheduledAction[5] ={"-Power cook schedule",
+                                    "-Irrigation schedule",
+                                    "-Lemon water schedul",
+                                    "-Power PAC schedule", 
+                                    "-VMC schedule"};
 
 // OK message
 const char* MSG_OK = "set";
@@ -166,9 +165,9 @@ void (*funcToCall2)();
 // Pointers to dynamically allocated classes
 static FileLittleFS* fileParam;
 static FileLittleFS *fileLogs;
-          FileLittleFS *fileDlyParam;
-          FileLittleFS* fileGlobalScheduledParam;
-          FileLittleFS* filePersistantParam;
+       FileLittleFS *fileDlyParam;
+       FileLittleFS* fileGlobalScheduledParam;
+       FileLittleFS* filePersistantParam;
 
 // Static instances of various classes
 LiquidCrystal_I2C lcd(I2C_ADR, 4, 5, 6, 16, 11, 12, 13, 14, POSITIVE);

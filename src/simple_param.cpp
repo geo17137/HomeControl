@@ -28,6 +28,17 @@ SimpleParam::SimpleParam(const char* initStr, const char* motif, unsigned nParam
   split();
 }
 
+SimpleParam::~SimpleParam() {
+  free(_motif);
+  free(_sparam);
+  free(_buffer);
+  free(_param);
+  _motif = NULL;
+  _sparam = NULL;
+  _buffer = NULL;
+  _param = NULL; 
+}
+
 int SimpleParam::get(int numParam) {
   return _param[numParam];
 }
