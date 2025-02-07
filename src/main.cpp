@@ -99,7 +99,7 @@
  * @version 2025.01.18.1
  * - Mise à jour de la documentation
  *  
- * @version 2025.02.27
+ * @version 2025.02.07
  * - Ajout d'un destructeur pour les objets simpleParam
  */
 #include "main.h"
