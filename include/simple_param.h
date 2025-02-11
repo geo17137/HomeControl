@@ -66,7 +66,6 @@ public:
    * 
    * @return char* 
    */
-  
   char* getStr();
   /**
    *@brief Set the Str param

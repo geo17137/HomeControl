@@ -1,8 +1,25 @@
-#include "io.h"
 
-// Fonctions permettant d'utiliser indifféremment les E/S gpio
-// directes sur un ESP32 ou utiliser les E/S via les registres
-// à décalage de la carte ES23A08
+/**
+ * @file io.cpp
+ * @brief Implementation of I/O functions for ESP32 or ES32A08 board.
+ * 
+ * This file contains functions to handle input and output operations
+ * either directly on an ESP32 or via shift registers on the ES32A08 board.
+ * 
+ * The functions include:
+ * - readByteInput: Reads 8 opto-isolated inputs from the ES32A08 board.
+ * - put74HC595: Writes an 8-bit field to the relay outputs.
+ * - clear74HC595: Resets the shift registers.
+ * - writeBitOutput: Writes a bit to a relay output.
+ * - readBitsInput: Reads a specified input bit.
+ * 
+ * The ES32A08 board uses bits 16-23 for output values and bits 0-7 for input data.
+ * 
+ * @note The code is conditionally compiled with the ES32A08 macro.
+ * 
+ * @see io.h
+ */
+#include "io.h"
 
 #ifdef ES32A08
 

@@ -101,6 +101,12 @@
  *  
  * @version 2025.02.07
  * - Ajout d'un destructeur pour les objets simpleParam
+ *  
+ * @version 2025.02.07.1
+ * - Mise à jour de la documentation
+ * 
+ *  * @version 2025.02.11
+ * - Modification de SinglePParam:split (init _motif)
  */
 #include "main.h"
 #include "io.h"
@@ -456,6 +462,9 @@ void initWifiStation() {
   // WiFi.enableAP(false);
 }
 #else
+/**
+ * @brief Initialisation de la connexion WiFi en mode station
+ */
 void initWifiStation() {
   char buffer[21];
   Serial.begin(115200);
@@ -698,8 +707,8 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
 // _ioDisplay();
 }
 
-/*
- * Monostable mise en route carte VMC
+/**
+ * @brief Monostable mise en route carte VMC
  * Fermeture relai carte VMC  après delai de mise sous tension
  * Force VMC à plein vitesse
  * Nota : la marche rapide de la VMC est assurée par une carte esp01s déportée.
@@ -708,7 +717,6 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
  * ACCES AUX FICHIERS NON AUTORISES
  * UN SEUL MESSAGE MQTT A LA FOIS (débordement de la pile ISR)
  */
-
 void monoCmdVmcBoard(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("start board\n", OUTPUT_PRINT);
