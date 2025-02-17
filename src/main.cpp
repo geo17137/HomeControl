@@ -1,4 +1,3 @@
-
 /**
  * @file main.cpp
  * @brief Automate ESP32 remplaçant le ZELIO
@@ -40,8 +39,7 @@
  * - Correction d'un bug bloquant la maj de l'affichage local (variable tpsProg mise à jour dans loop test wifi)
  * 
  * @version 2.9.1 08/1/24
- * - Force l'affichage par definition du symbole FORCE_DISPLAY
- * - Necessite une recompilation
+ * - Force l'affichage par definition du symbole FORCE_DISPLAY (necessite une recompilation)
  * 
  * @version 2.9.2 28/3/24
  * - INTERVAL_RESET_WDT 100 -> 500
@@ -54,20 +52,20 @@
  * - Génération d'une version pour carte ES32A08 en definissant ES32A08 dans const.h
  * - Regroupement de toutes les E/S gpio dans io.cpp
  * 
- * @version 2024.6.22
- * - Changement numérotation version
+ * @version 2024.06.22
+ * - Changement numérotation version (aaa.mm.jj)
  * - Affichage rssi sur l'écran lcd et envoi de message mqtt homecontrol/wifi_streng
  * 
- * @version 2024.6.25
+ * @version 2024.06.25
  * - Possibilité de bloquer le remplissage du supresseur
  * 
- * @version 2024.6.25
+ * @version 2024.06.25
  * - Test périodique d'envoi de messages mqtt. En cas de non réponse reboot
  * 
- * @version 2024.9.19
+ * @version 2024.09.19
  * - Correction bug : commande PAC depuis la console, commande arrosage et irrigation avec la télécommande
  * 
- * @version 2024.9.20
+ * @version 2024.09.20
  * - Regroupement des messages lcd
  * - Correction de bugs mineurs
  * 
@@ -105,8 +103,13 @@
  * @version 2025.02.07.1
  * - Mise à jour de la documentation
  * 
- *  * @version 2025.02.11
+ * @version 2025.02.11
  * - Modification de SinglePParam:split (init _motif)
+ * - Modification allocation dynamique (malloc -> new)
+ * 
+ * @version 2025.02.17
+ * - Envoi message TOPIC_DEFAUT_SUPRESSEUR off vers HA
+ *   à l'alimentation du surpresseur 
  */
 #include "main.h"
 #include "io.h"

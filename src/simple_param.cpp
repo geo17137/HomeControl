@@ -43,10 +43,15 @@ void SimpleParam::split() {
  */
 SimpleParam::SimpleParam(const char* initStr, const char* motif, unsigned nParam) {
   _nparam = nParam;
-  _motif =  (char*)malloc(strlen(motif) + 1);
-  _sparam = (char*)malloc(strlen(initStr) + 1);
-  _buffer = (char*)malloc(strlen(initStr) + 1);
-  _param  = (int*)malloc((sizeof(int) * nParam));
+  _motif = new char[strlen(motif) + 1];
+  _sparam = new char[strlen(initStr) + 1];
+  _buffer = new char[strlen(initStr) + 1];
+  _param = new int[nParam];
+
+ // _motif =  (char*)malloc(strlen(motif) + 1);
+ // _sparam = (char*)malloc(strlen(initStr) + 1);
+ // _buffer = (char*)malloc(strlen(initStr) + 1);
+ // _param  = (int*)malloc((sizeof(int) * nParam));
   strcpy(_motif, motif);
   strcpy(_sparam, initStr);
   split();
@@ -59,10 +64,14 @@ SimpleParam::SimpleParam(const char* initStr, const char* motif, unsigned nParam
  * and parameter array, and sets the pointers to NULL.
  */
 SimpleParam::~SimpleParam() {
-  free(_motif);
-  free(_sparam);
-  free(_buffer);
-  free(_param);
+  delete  _motif;
+  delete  _sparam;
+  delete  _buffer;
+  delete  _param;
+ // free(_motif);
+ // free(_sparam);
+ // free(_buffer);
+ // free(_param);
   _motif = NULL;
   _sparam = NULL;
   _buffer = NULL;

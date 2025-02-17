@@ -270,7 +270,9 @@ void localLoop(void) {
 				// Mise à jour dynamique du timeout
 				setDelay(tache_t_surpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
 				t_start(tache_t_surpressorFilling);
-				// Mettre systématuquement la pompe en route  
+				// Publier pour HA et appli Android
+				mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
+				// Mettre systématiquement la pompe en route  
 				on(O_POMPE);
 				writeLogs("Remplissage surpresseur");
 			}	
