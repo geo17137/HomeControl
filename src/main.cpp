@@ -113,10 +113,8 @@
  *
  * @version 2025.03.30
  * - Serveillance mise en route trop fréquente surpresseur
- *   (détection rupture canalisation, fuite...
+ *   (détection rupture canalisation, fuite...)
  *    Envoi message TOPIC_SUPRESSEUR_SECURITY on vers HA
- *   à l'alimentation du surpresseur 
-* 
  */
 
 #include "main.h"
@@ -574,7 +572,6 @@ void setup() {
   
   Serial.begin(115200);
   // delay(100);
-  // Serial.println("___________________________");
   initGpio();
 #ifdef IO_TEST
   Serial.println("Esp start");
@@ -889,11 +886,9 @@ void monoSurpressorSecurity(TimerHandle_t xTimer) {
     mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "on");
     supressorFillingSecurity = true;
     monoSurpressorSecurityStarted = false;
-
   }
   else {
     supressorFillingSecurity = false;
-    monoSurpressorSecurityStarted = false;
   }
 }
 /**

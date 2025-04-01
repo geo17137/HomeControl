@@ -123,7 +123,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 //-----------------------
 // Relais avec contacts sous 220V
 #ifdef ES32A08
-// Les sorties relais sont liée à la postion des bits
+// Les sorties relais sont liée à la position des bits
 // dans le registre 74HC595 (U05)
 #define O_VMC           (0x01 << 16)
 #define O_PAC           (0x02 << 16)

@@ -274,21 +274,25 @@ void localLoop(void) {
 				mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
 				// Mettre systématiquement la pompe en route  
 				on(O_POMPE);
-				// Gérer la sécurité du supresseur (nombre de démarrages exessifs)
+
+				// Gérer la sécurité du supresseur (nombre exessifs de démarrages)
 				if (cDlyParam->get(SURPRESSOR_SECURIT_EN)) {
+					// Démarrage monostable la première fois
 					if (!monoSurpressorSecurityStarted) {
 						// Serial.println("t_start(tache_t_monoSurpressorSecurity)");
 						t_start(tache_t_monoSurpressorSecurity);
 						monoSurpressorSecurityStarted = true;
 						n_supressorFillingInTime = 1;
 					}
+					// Incrémenter le compteur de démarrage les fois suivantes
 					else {
 						n_supressorFillingInTime++;
 						// Serial.println("n_supressorFillingInTime++");
 					}
 				}
+
 				writeLogs("Remplissage surpresseur");
-			}	
+			}
 		}
 		else if (!bSupressorDisLog) {
 			#ifdef DEBUG_OUTPUT
@@ -326,8 +330,10 @@ void localLoop(void) {
 			writeLogs("Fin remplissage surpresseur");
 		}
 	}
-	// Enregistrement de l'autorisation surpresseur en cas de défaut canalisation
-	static unsigned surpressorSecurityFlag;
+
+	// Enregistrement de l'autorisation surpresseur (état off) en cas de mise 
+	// en sécurité surpresseur (défaut canalisation)
+		static unsigned surpressorSecurityFlag;
 	if (supressorFillingSecurity && !surpressorSecurityFlag) {
 		surpressorSecurityFlag = true;
 		fileDlyParam->writeFile(cDlyParam->getStr(), "w");
