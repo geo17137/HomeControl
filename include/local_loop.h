@@ -24,12 +24,18 @@ extern boolean isLcdDisplayOn;
 extern boolean electricalPanelOpen;
 extern boolean ioDisplayFlag;
 extern boolean bootDisplayOff;
+extern boolean monoSurpressorSecurityStarted;
+extern boolean supressorFillingSecurity;
+
+extern unsigned n_supressorFillingInTime;
 extern int     powerWrite;
 
 extern void (*onSingleClick)();
 //extern void (*rotaryTask)();
 
 extern FileLittleFS* filePowerPac;
+extern FileLittleFS* fileDlyParam;
+
 extern void ioDisplay();
 extern void ioDisplay2();
 
@@ -41,6 +47,7 @@ extern TACHE_T tache_t_surpressorFilling;
 extern TACHE_T tache_t_cmdEvEst;
 extern TACHE_T tache_t_cmdVmcBoard;
 extern TACHE_T tache_t_backLight2;
+extern TACHE_T tache_t_monoSurpressorSecurity;
 
 extern SimpleParam* cDlyParam;
 

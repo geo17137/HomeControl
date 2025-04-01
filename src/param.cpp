@@ -1,12 +1,23 @@
 
+/**
+ * @file param.cpp
+ * @brief Implementation of the Param and ItemParam classes for handling parameter settings.
+ */
 #include "param.h"
 
+/**
+ * @brief Prints the ItemParam object in the format enable:HMin:MMin:HMax:MMax.
+ */
 void ItemParam::print() {
   static char temp[48];
   sprintf(temp,"%d:%02d:%02d:%02d:%02d\n",enable,HMin,MMin,HMax,MMax);
   Serial.print(temp);
 }
-
+/**
+ * @brief Constructs a Param object and initializes it with the given parameter string.
+ * 
+ * @param param The parameter string to initialize the object with.
+ */
 Param::Param(const char* param) {
   strcpy(_sparam, param);
   setParam();
@@ -106,7 +117,9 @@ void Param::updateStringParam(char* param) {
 char* Param::getStr() {
   return _sparam;
 }
-
+/**
+ * @brief Prints the parameters in a formatted manner.
+ */
 void Param::print() {
   int j = 0;
   for (int i = 0; i < N_PARAM; i++) {

@@ -213,7 +213,7 @@ void localLoop(void) {
 	}
   
 	//----------------------------------------------------------------------------
-	// Commande surpresseur sur fermuture contact supresseur
+	// Commande surpresseur sur fermeture contact supresseur
 	// - Si le remplissage échoue la première fois
 	//   (timout trop faible, usure ou pompe défectueuse),
 	//   Une relance est possible par le bouton sur panneau elec, ou l'appli Android
@@ -232,7 +232,7 @@ void localLoop(void) {
 			// Reset message TOPIC_DEFAUT_SUPRESSEUR
 			first = false;
 			// Message vers HA et appli Android
-			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
+			mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
 		}
 		// Si le surpresseur est autorisé	
 		if (cDlyParam->get(SUPRESSOR_EN)) {
@@ -270,8 +270,23 @@ void localLoop(void) {
 				// Mise à jour dynamique du timeout
 				setDelay(tache_t_surpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
 				t_start(tache_t_surpressorFilling);
-				// Mettre systématuquement la pompe en route  
+				// Publier pour HA et appli Android
+				mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
+				// Mettre systématiquement la pompe en route  
 				on(O_POMPE);
+				// Gérer la sécurité du supresseur (nombre de démarrages exessifs)
+				if (cDlyParam->get(SURPRESSOR_SECURIT_EN)) {
+					if (!monoSurpressorSecurityStarted) {
+						// Serial.println("t_start(tache_t_monoSurpressorSecurity)");
+						t_start(tache_t_monoSurpressorSecurity);
+						monoSurpressorSecurityStarted = true;
+						n_supressorFillingInTime = 1;
+					}
+					else {
+						n_supressorFillingInTime++;
+						// Serial.println("n_supressorFillingInTime++");
+					}
+				}
 				writeLogs("Remplissage surpresseur");
 			}	
 		}
@@ -293,7 +308,7 @@ void localLoop(void) {
 			startSupressorFilling = false;
 			// Interdit une autre tentative
 			startSupressorFilling2 = true;
-			mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "off");
+			mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
 		}  		
 	}
 	// Ouverture du contact supresseur (fin remplissage)
@@ -311,6 +326,18 @@ void localLoop(void) {
 			writeLogs("Fin remplissage surpresseur");
 		}
 	}
+	// Enregistrement de l'autorisation surpresseur en cas de défaut canalisation
+	static unsigned surpressorSecurityFlag;
+	if (supressorFillingSecurity && !surpressorSecurityFlag) {
+		surpressorSecurityFlag = true;
+		fileDlyParam->writeFile(cDlyParam->getStr(), "w");
+		// Serial.println("supressorFillingSecurity && !surpressorSecurityFlag");
+	}
+	if (!supressorFillingSecurity && surpressorSecurityFlag) {
+		surpressorSecurityFlag = false;
+		// Serial.println("!supressorFillingSecurity && surpressorSecurityFlag");
+	}
+
 	// Mise à jour affichage toutes les 13s si SURPRESSOR_OFF
 	// Reset message dans PubSubCallback->TOPIC_WRITE_DLY_PARAM
 	static unsigned disFrequency;

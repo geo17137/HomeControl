@@ -1,10 +1,9 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.02.07";
+const String version = "2025.04.01";
 
-// #define IO_TEST
-//#define FORCE_DISPLAY
+//#define IO_TEST
 #define PRODUCT_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
@@ -17,6 +16,7 @@ const String version = "2025.02.07";
 #endif
 #else
 #define TOPIC_PREFIX "_"
+#define FORCE_DISPLAY
 #ifdef ES32A08
 #define I2C_ADR  PCF8574_ADDR_A21_A11_A01
 #else
@@ -68,6 +68,12 @@ const String version = "2025.02.07";
 #define DLY_DEFAULT_SCREEN 6 * 60
 // Délai de coupure circuit2 (s)
 #define DLY_DEFAULT_OFF_CIRCUIT2 60*60
+// Délay avnt mise en sécurité supresseur (s)
+// 3 cycles de remplissage / vidage
+#define DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT 3*170
+// Nombre de mises en route supresseur autorisés durant 
+// DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT
+#define MAX_SUPRESSOR_FILLING_IN_TIME 3
 // Période bistable reglage débit (s)
 const int PAS_PERIODE_DEBIT = 5;
 // Période du rapport cyclique vanne EST en s
@@ -239,7 +245,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_PARAM          TOPIC_PREFIX  "homecontrol/param"
 #define TOPIC_DLY_PARAM      TOPIC_PREFIX  "homecontrol/dly_param"
 #define TOPIC_GPIO           TOPIC_PREFIX  "homecontrol/gpio"
-#define TOPIC_DEFAUT_SUPRESSEUR            "homecontrol/default_surpressor"
+#define TOPIC_DEFAUT_SUPRESSOR             "homecontrol/default_surpressor"
+#define TOPIC_SUPRESSOR_SECURITY           "homecontrol/surpressor_security"
 #define TOPIC_GLOBAL_SCHED   TOPIC_PREFIX  "homecontrol/global_sched" 
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
@@ -273,7 +280,9 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 
 // Contenu du fichier DLY_PARAM_FILE_NAME (valeurs par défaut)
 //  Temporisations monostables par défaut en secondes
-//  et paramètres heure été/hivers, enregistrement logs
+//  et paramètres heure été/hivers, enregistrement logs,
+//  mise en route supresseur, sécurité supresseur
+//  (valeurs par défaut)  
 // -----------------------------------------------
 // Durée arrosage 30mn (1800s)
 // Durée commande EV Est 10mn (600s)
@@ -282,18 +291,20 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 // Heure d'hivers 1, été 2
 // Autorisation logs 1 sinon 0
 // Autorisation mise en route supresseur 1 sinon 0
+// Secutité supresseur 1 sinon 0
 // -----------------------------------------------
-#define DEFAUT_DELAY_PARAM "1800:600:150:65:1:0:1"
+#define DEFAUT_DELAY_PARAM "1800:600:150:69:1:0:1:1"
 
 // Position des paramètres dans DEFAUT_DELAY_PARAM
-#define TIME_WATERING       0
-#define EAST_VALVE_ON_TIME  1
-#define TIME_TANK_FILLING   2
-#define TIME_SUPRESSOR      3
-#define SUMMER_TIME         4
-#define LOG_STATUS          5
-#define SUPRESSOR_EN        6
-#define N_DLY_PARAM         7
+#define TIME_WATERING         0
+#define EAST_VALVE_ON_TIME    1
+#define TIME_TANK_FILLING     2
+#define TIME_SUPRESSOR        3
+#define SUMMER_TIME           4
+#define LOG_STATUS            5
+#define SUPRESSOR_EN          6
+#define SURPRESSOR_SECURIT_EN 7
+#define N_DLY_PARAM           8
 
 // Décalage GMTheure d'été/hivers
 #define SUMMER_TIME_OFFSET 2

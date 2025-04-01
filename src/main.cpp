@@ -1,4 +1,3 @@
-
 /**
  * @file main.cpp
  * @brief Automate ESP32 remplaçant le ZELIO
@@ -40,8 +39,7 @@
  * - Correction d'un bug bloquant la maj de l'affichage local (variable tpsProg mise à jour dans loop test wifi)
  * 
  * @version 2.9.1 08/1/24
- * - Force l'affichage par definition du symbole FORCE_DISPLAY
- * - Necessite une recompilation
+ * - Force l'affichage par definition du symbole FORCE_DISPLAY (necessite une recompilation)
  * 
  * @version 2.9.2 28/3/24
  * - INTERVAL_RESET_WDT 100 -> 500
@@ -54,20 +52,20 @@
  * - Génération d'une version pour carte ES32A08 en definissant ES32A08 dans const.h
  * - Regroupement de toutes les E/S gpio dans io.cpp
  * 
- * @version 2024.6.22
- * - Changement numérotation version
+ * @version 2024.06.22
+ * - Changement numérotation version (aaa.mm.jj)
  * - Affichage rssi sur l'écran lcd et envoi de message mqtt homecontrol/wifi_streng
  * 
- * @version 2024.6.25
+ * @version 2024.06.25
  * - Possibilité de bloquer le remplissage du supresseur
  * 
- * @version 2024.6.25
+ * @version 2024.06.25
  * - Test périodique d'envoi de messages mqtt. En cas de non réponse reboot
  * 
- * @version 2024.9.19
+ * @version 2024.09.19
  * - Correction bug : commande PAC depuis la console, commande arrosage et irrigation avec la télécommande
  * 
- * @version 2024.9.20
+ * @version 2024.09.20
  * - Regroupement des messages lcd
  * - Correction de bugs mineurs
  * 
@@ -101,7 +99,26 @@
  *  
  * @version 2025.02.07
  * - Ajout d'un destructeur pour les objets simpleParam
+ *  
+ * @version 2025.02.07.1
+ * - Mise à jour de la documentation
+ * 
+ * @version 2025.02.11
+ * - Modification de SinglePParam:split (init _motif)
+ * - Modification allocation dynamique (malloc -> new)
+ * 
+ * @version 2025.02.17
+ * - Envoi message TOPIC_DEFAUT_SUPRESSEUR off vers HA
+ *   à l'alimentation du surpresseur 
+ *
+ * @version 2025.03.30
+ * - Serveillance mise en route trop fréquente surpresseur
+ *   (détection rupture canalisation, fuite...
+ *    Envoi message TOPIC_SUPRESSEUR_SECURITY on vers HA
+ *   à l'alimentation du surpresseur 
+* 
  */
+
 #include "main.h"
 #include "io.h"
 
@@ -230,6 +247,7 @@ FileLittleFS* initDlyParam(boolean force) {
   }
   cDlyParam = new SimpleParam(fileDlyParam->readFile().c_str(), ":", N_DLY_PARAM);
   fileDlyParam->close();
+  // cDlyParam->print();
 #ifdef DEBUG_OUTPUT
   cDlyParam->print();
 #endif
@@ -456,6 +474,9 @@ void initWifiStation() {
   // WiFi.enableAP(false);
 }
 #else
+/**
+ * @brief Initialisation de la connexion WiFi en mode station
+ */
 void initWifiStation() {
   char buffer[21];
   Serial.begin(115200);
@@ -553,6 +574,7 @@ void setup() {
   
   Serial.begin(115200);
   // delay(100);
+  // Serial.println("___________________________");
   initGpio();
 #ifdef IO_TEST
   Serial.println("Esp start");
@@ -622,30 +644,32 @@ void setup() {
   //----------------------------------------- Init monostables ----------------------------------------------
   // ****** Pas d'accès fichier dans un monostable (kernel panic) ******
   // ****** Pas d'envois repété de messages MQTT (kernel panic)   ******
-  // Durée max lance arrosage
+  // Monostable durée max lance arrosage
   tache_t_watering = t_cree(monoWatering, cvrtic(cDlyParam->get(TIME_WATERING) * 1000));
-  // Durée remplissage réservoir
+  // Monostable durée remplissage réservoir
   tache_t_tankFilling = t_cree(monoTankFilling, cvrtic(cDlyParam->get(TIME_TANK_FILLING) * 1000));
-  // Durée max mise sous pression surpresseur
+  // Monostable durée max mise sous pression surpresseur
   tache_t_surpressorFilling = t_cree(monoSurpressorFilling, cvrtic(cDlyParam->get(TIME_SUPRESSOR) * 1000));
-  // Durée ouverture electrovanne EST
+  // Monostable durée ouverture electrovanne EST
   tache_t_cmdEvEst = t_cree(monoCmdEvEst, cvrtic(cDlyParam->get(EAST_VALVE_ON_TIME) * 1000));
-  // Délais de coupure de la PAC après commande d'arrét PAC
+  // Monostable délais de coupure de la PAC après commande d'arrét PAC
   tache_t_monoPacOff = t_cree(monoPacOff, cvrtic(DLY_PAC_OFF) * 1000);
-  // Délais d'envoi des commande vers la PAC après mise sous tension
+  // Monostable délais d'envoi des commande vers la PAC après mise sous tension
   tache_t_monoPacOn = t_cree(monoPacOn, cvrtic(DLY_PAC_ON) * 1000);
-  // Delai avant envoi d'une commande mqtt vers la carte VMC déportée 
+  // Monostable delai avant envoi d'une commande mqtt vers la carte VMC déportée 
   tache_t_cmdVmcBoard = t_cree(monoCmdVmcBoard, cvrtic(DLY_VMC_BOARD_ON) * 1000);
-  // Durée affichage LCD local après modification d'une E/S
+  // Monostable durée affichage LCD local après modification d'une E/S
   tache_t_backLight = t_cree(monoCmdBackLight, cvrtic(DLY_BACK_LIGHT) * 1000);
-  // Durée d'affichage local si porte armoire éléctrique est restée ouverte 
+  // Monostable durée d'affichage local si porte armoire éléctrique est restée ouverte 
   tache_t_backLight2 = t_cree(monoCmdBackLight2, cvrtic(DLY_BACK_LIGHT2) * 1000);
-  // Délai avant affichage par défaut
+  // Monostable délai avant affichage par défaut
   tache_t_defaultDisplay = t_cree(monoDefaultDisplay, cvrtic(DLY_DEFAULT_SCREEN) * 1000);
-  // Durée d'ouverture de l'électrovanne déportée d'irrigation (circuit d'arrosage des tomates)
+  // Monostable durée d'ouverture de l'électrovanne déportée d'irrigation (circuit d'arrosage des tomates)
   tache_t_offCircuit2 = t_cree(monoOffCircuit2, cvrtic(DLY_DEFAULT_OFF_CIRCUIT2) * 1000);
   // Astable reglage débit, durée d'un pas de rapport cyclique
   tache_t_monoDebit = t_cree(monoDebit, cvrtic(PAS_PERIODE_DEBIT) * 1000, pdTRUE);
+  // Monostable mise en sécurité supresseur
+  tache_t_monoSurpressorSecurity = t_cree(monoSurpressorSecurity, cvrtic(DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT) * 1000);
 
   // Set watch dog timeout
 #ifdef ENABLE_WATCHDOG
@@ -696,10 +720,11 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
 // Affichage de la taille de la pile disponible
 // Serial.println(uxTaskGetStackHighWaterMark(NULL));
 // _ioDisplay();
+// cDlyParam->print();
 }
 
-/*
- * Monostable mise en route carte VMC
+/**
+ * @brief Monostable mise en route carte VMC
  * Fermeture relai carte VMC  après delai de mise sous tension
  * Force VMC à plein vitesse
  * Nota : la marche rapide de la VMC est assurée par une carte esp01s déportée.
@@ -708,7 +733,6 @@ sprintf(rssi_buffer, "RSSI:%ld", rssi);
  * ACCES AUX FICHIERS NON AUTORISES
  * UN SEUL MESSAGE MQTT A LA FOIS (débordement de la pile ISR)
  */
-
 void monoCmdVmcBoard(TimerHandle_t xTimer) {
 #ifdef DEBUG_OUTPUT
   print("start board\n", OUTPUT_PRINT);
@@ -769,7 +793,7 @@ void monoSurpressorFilling(TimerHandle_t xTimer) {
   if (!startSupressorFilling2) {
     // Echec première tentative
     // Possibilité de reprise par bouton réarmement local ou à distance
-    mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "on");
+    mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on");
     erreurSupresseur = true;
 #ifdef DEBUG_OUTPUT
     print("TOPIC_GPIO_DEFAUT_SUPRESSEUR  on\n", OUTPUT_PRINT);
@@ -780,7 +804,7 @@ void monoSurpressorFilling(TimerHandle_t xTimer) {
     // Problème sur le circuit hydraulique pompe surpresseur
     // Pas de troisième tentative, résolution du problème
     // par intervention physique
-    mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "on2");
+    mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on2");
     erreurPompe = true;
 #ifdef DEBUG_OUTPUT
     print("TOPIC_GPIO_DEFAUT_SUPRESSEUR_N2  on\n", OUTPUT_PRINT);
@@ -852,6 +876,26 @@ void monoDebit(TimerHandle_t xTimer) {
   }
   count = ++count % MAX_PAS_PERIODE_DEBIT;
 } 
+/**
+ * @brief Monostable de serveillance surpresseur
+ *  
+ * @param xTimer 
+ */
+void monoSurpressorSecurity(TimerHandle_t xTimer) {
+  if (cDlyParam->get(SURPRESSOR_SECURIT_EN) && 
+      n_supressorFillingInTime >= MAX_SUPRESSOR_FILLING_IN_TIME ) {
+    off(O_POMPE);
+    cDlyParam->set(SUPRESSOR_EN, 0);
+    mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "on");
+    supressorFillingSecurity = true;
+    monoSurpressorSecurityStarted = false;
+
+  }
+  else {
+    supressorFillingSecurity = false;
+    monoSurpressorSecurityStarted = false;
+  }
+}
 /**
  * @brief commande de la vanne EST par l'astable monoDebit 
  * 
@@ -1444,12 +1488,18 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     mqttClient.publish(TOPIC_PARAM, cParam->getStr());
     if (erreurSupresseurEvent) {
       erreurSupresseurEvent = false;
-      mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "on");
+      mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on");
     }
     if (erreurPompEvent) {
       erreurPompEvent = false;
-      mqttClient.publish(TOPIC_DEFAUT_SUPRESSEUR, "on2");
+      mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on2");
     }
+    // if (supressorFillingSecurity){
+    //   mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "on");
+    // }
+    // else {
+    //   mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "off");
+    // }
     return;
   }
   //------------------  TOPIC_WRITE_PARAM ----------------------
@@ -1466,8 +1516,6 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   if (cmp(topic, TOPIC_GET_DLY_PARAM)) {
     // cDlyParam->print();
     mqttClient.publish(TOPIC_DLY_PARAM, cDlyParam->getStr());
-    if (cDlyParam->get(SUPRESSOR_EN))
-      
     return;
   }
   //------------------  TOPIC_WRITE_DLY_PARAM ----------------------
@@ -1476,9 +1524,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
 #ifdef DEBUG_OUTPUT
     print(cDlyParam->getStr(), OUTPUT_PRINT);
 #endif
-    // cDlyParam->print();
     fileDlyParam->writeFile(strPayload.c_str(), "w");
+    if (cDlyParam->get(SUPRESSOR_EN)) {
+       mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "off");
+       supressorFillingSecurity = false;
+    }
     // Mis à jour si modification de auto surpresseur
+    // cDlyParam->print();
     ioDisplay();
 		display = ioDisplay;
     return;

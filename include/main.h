@@ -146,9 +146,14 @@ boolean electricalPanelOpen;
 boolean bootDisplayOff;
 boolean vmcFast;
 boolean mqttConnect;
+boolean supressorFillingMonoStart;
+boolean supressorFillingSecurity;
+boolean monoSurpressorSecurityStarted;
+
 unsigned cmdVanneEst = 1;
 unsigned onVmc;
 unsigned wateringNoTimeOut;
+unsigned n_supressorFillingInTime;
 int vmcMode;
 char rssi_buffer[10];
 
@@ -231,6 +236,7 @@ TACHE_T tache_t_encoderTask;
 TACHE_T tache_t_defaultDisplay;
 TACHE_T tache_t_offCircuit2;
 TACHE_T tache_t_monoDebit;
+TACHE_T tache_t_monoSurpressorSecurity;
 
 // RTOS task functions (monostable) format Mtr86
 void monoPacOff(TimerHandle_t xTimer);
@@ -245,7 +251,7 @@ void monoCmdBackLight2(TimerHandle_t xTimer);
 void monoDefaultDisplay(TimerHandle_t xTimer);
 void monoOffCircuit2(TimerHandle_t xTimer);
 void monoDebit(TimerHandle_t xTimer);
-
+void monoSurpressorSecurity(TimerHandle_t xTimer);
 #ifdef EXEC_TIME_MEASURE
 unsigned long Temps_stop_us;
 unsigned long Temps_start_us;
