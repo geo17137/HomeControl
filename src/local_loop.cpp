@@ -333,7 +333,7 @@ void localLoop(void) {
 
 	// Enregistrement de l'autorisation surpresseur (état off) en cas de mise 
 	// en sécurité surpresseur (défaut canalisation)
-		static unsigned surpressorSecurityFlag;
+	static unsigned surpressorSecurityFlag;
 	if (supressorFillingSecurity && !surpressorSecurityFlag) {
 		surpressorSecurityFlag = true;
 		fileDlyParam->writeFile(cDlyParam->getStr(), "w");

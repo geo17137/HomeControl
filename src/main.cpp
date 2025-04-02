@@ -872,9 +872,10 @@ void monoDebit(TimerHandle_t xTimer) {
   //  Serial.printf("cyclcalReport=%02d, count=%02d, OFF\r", cyclcalReport, count);
   }
   count = ++count % MAX_PAS_PERIODE_DEBIT;
-} 
+}
+
 /**
- * @brief Monostable de serveillance surpresseur
+ * @brief Monostable de surveillance surpresseur
  *  
  * @param xTimer 
  */
@@ -891,6 +892,7 @@ void monoSurpressorSecurity(TimerHandle_t xTimer) {
     supressorFillingSecurity = false;
   }
 }
+
 /**
  * @brief commande de la vanne EST par l'astable monoDebit 
  * 
@@ -901,6 +903,7 @@ void onVanneEst() {
   // Logique inversée, utilisé pour signaler commande vanne EST
   cmdVanneEst = 0;
 }
+
 /**
  * @brief Arrêt de la vanne EST
  * 
