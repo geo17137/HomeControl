@@ -41,7 +41,7 @@ ItemParam Param::get(int numParam, int timeSet) {
  * @param timeSet  0..4
  * @param itemParam item de la forme 0:00:00:00:00
  */
-void Param::set(int numParam, int timeSet, ItemParam itemParam) {
+void Param::set(int numParam, int timeSet, const ItemParam itemParam) {
   _param[(numParam * N_PLAGES) + timeSet] = itemParam;
 }
 
@@ -91,11 +91,10 @@ void  Param::setStr(const char* str) {
  */
 void Param::updateStringParam(char* param) {
   char buffer[60];
-  ItemParam itemParam;
   param[0] = '\0';
   for (int i = 0; i < N_DEVICES; i++) {
     for (int j = 0; j < N_PLAGES; j++) {
-      itemParam = get(i,j);
+      ItemParam   itemParam = get(i, j);
       sprintf(buffer,"%d:%02d:%02d:%02d:%02d:",
         itemParam.enable,
         itemParam.HMin,

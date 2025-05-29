@@ -219,7 +219,7 @@ const char* bootRaison() {
  *         de manipulation des paramètres 
  */
 FileLittleFS* initParam(boolean force) {
-  FileLittleFS* fileParam = new FileLittleFS(PARAM_FILE_NAME);
+  auto* fileParam = new FileLittleFS(PARAM_FILE_NAME);
   if (!FileLittleFS::exist(PARAM_FILE_NAME) || force) {
     fileParam->writeFile(PARAM, "w");
   }
@@ -239,7 +239,7 @@ FileLittleFS* initParam(boolean force) {
  *         des tempos
  */
 FileLittleFS* initDlyParam(boolean force) {
-  FileLittleFS* fileDlyParam = new FileLittleFS(DLY_PARAM_FILE_NAME);
+  auto* fileDlyParam = new FileLittleFS(DLY_PARAM_FILE_NAME);
   if (!FileLittleFS::exist(DLY_PARAM_FILE_NAME) || force) {
     fileDlyParam->writeFile(DEFAUT_DELAY_PARAM, "w");
   }
@@ -260,7 +260,7 @@ FileLittleFS* initDlyParam(boolean force) {
  *         des éléments de persistance.
  */
 FileLittleFS* initPersitantFileDevice(boolean force) {
-  FileLittleFS* filePersistantParam = new FileLittleFS(FILE_PERSISTANT_DEVICE);
+  auto* filePersistantParam = new FileLittleFS(FILE_PERSISTANT_DEVICE);
   if (!FileLittleFS::exist(FILE_PERSISTANT_DEVICE) || force) {
     filePersistantParam->writeFile(PERSISTANT, "w");
   }
@@ -280,7 +280,7 @@ FileLittleFS* initPersitantFileDevice(boolean force) {
  *         des éléments de persistance.
  */
 FileLittleFS* initGlobalScheduledParam(boolean force) {
-  FileLittleFS* fileGlobalScheduledParam = new FileLittleFS(GLOBAL_SCHEDULED_PARAM_FILE_NAME);
+  auto* fileGlobalScheduledParam = new FileLittleFS(GLOBAL_SCHEDULED_PARAM_FILE_NAME);
   if (!FileLittleFS::exist(GLOBAL_SCHEDULED_PARAM_FILE_NAME) || force) {
     fileGlobalScheduledParam->writeFile(DEFAUT_GLOBAL_SCHEDULED_PARAM, "w");
   }
@@ -489,7 +489,7 @@ void initWifiStation() {
     delay(5000);
     ESP.restart();
   }
-  WiFi.setHostname(hostname);
+  WiFiClass::setHostname(hostname);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
@@ -1055,6 +1055,7 @@ void schedule() {
             break;
           }
           break;
+        default: ;
         }
       }
       // -----------------------------------------------------------
@@ -1127,6 +1128,7 @@ void schedule() {
             break;
           }
           break;
+        default: ;
         }
       }
     }
@@ -1282,6 +1284,7 @@ void setVmc(int cmd) {
     vmcMode = VMC_ON;
     t_start(tache_t_cmdVmcBoard);
     break;
+  default: ;
   }
   char buffer[4];
   itoa(vmcMode, buffer, 10);
@@ -1465,7 +1468,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   char buffer[80];
 #endif
   for (unsigned int i = 0; i < length; i++) {
-    strPayload += (char)payload[i];
+    strPayload += static_cast<char>(payload[i]);
   }
 #ifdef DEBUG_OUTPUT_
   Serial.print(topic);
