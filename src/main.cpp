@@ -115,6 +115,9 @@
  * - Serveillance mise en route trop fréquente surpresseur
  *   (détection rupture canalisation, fuite...)
  *    Envoi message TOPIC_SUPRESSEUR_SECURITY on vers HA
+ * 
+ * @version 2025.06.13
+ * - Supression du fichier log si > MAX_LOG_SIZE 
  */
 
 #include "main.h"
@@ -397,7 +400,8 @@ void initGpio() {
 void logsWrite(const char* log) {
   char buffer[80];
   if (fileLogs->size() > MAX_LOG_SIZE)
-    fileLogs->writeFile("", "w");
+    fileLogs->rmFile(); // Supprime le fichier si trop gros
+//    fileLogs->writeFile("", "w");
   sprintf(buffer, "%s - %s\n", getDate(), log);
   fileLogs->writeFile(buffer, "a");
 }
