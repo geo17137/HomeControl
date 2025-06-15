@@ -118,6 +118,9 @@
  * 
  * @version 2025.06.13
  * - Supression du fichier log si > MAX_LOG_SIZE 
+ * 
+ * @version 2025.06.15
+ * - Modification enregistrement log pour irrigation façade sud
  */
 
 #include "main.h"
@@ -906,6 +909,7 @@ void onVanneEst() {
   t_start(tache_t_monoDebit);
   // Logique inversée, utilisé pour signaler commande vanne EST
   cmdVanneEst = 0;
+  writeLogs("Irrigation façade SUD");
 }
 
 /**
@@ -918,6 +922,7 @@ void offVanneEst() {
   off(O_TRANSFO);
   off(O_EV_EST);
   t_stop(tache_t_monoDebit);
+  writeLogs("Fin irrigation façade SUD");
 }
 
 //--------------------------------------------------------------------------------------------

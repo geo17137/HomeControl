@@ -55,25 +55,25 @@ void logsUpdate() {
   }
 
   // Vanne EST
-  static boolean flagE;
-  static boolean flagNE = true;
-  outputState = gpioState(O_EV_EST);
-  if (outputState && !flagE) {
-    flagE = true;
-    flagNE = false;
-#ifdef DEBUG_OUTPUT_LOOP2
-    Serial.printf("\n%02d:%02d EV EST sous tension\n", h, m);
-#endif
-    writeLogs("Irrigation façade SUD");
-  }
-  else if (!outputState && !flagNE) {
-    flagE = false;
-    flagNE = true;
-#ifdef DEBUG_OUTPUT_LOOP2
-    Serial.printf("\n%02d:%02d EV EST hors tension\n", h, m);
-#endif
-    writeLogs("Fin irrigation façade SUD");
-  }
+//   static boolean flagE;
+//   static boolean flagNE = true;
+//   outputState = gpioState(O_EV_EST);
+//   if (outputState && !flagE) {
+//     flagE = true;
+//     flagNE = false;
+// #ifdef DEBUG_OUTPUT_LOOP2
+//     Serial.printf("\n%02d:%02d EV EST sous tension\n", h, m);
+// #endif
+//     writeLogs("Irrigation façade SUD");
+//   }
+//   else if (!outputState && !flagNE) {
+//     flagE = false;
+//     flagNE = true;
+// #ifdef DEBUG_OUTPUT_LOOP2
+//     Serial.printf("\n%02d:%02d EV EST hors tension\n", h, m);
+// #endif
+//     writeLogs("Fin irrigation façade SUD");
+//   }
 
   // Electroménager
   static boolean flagF;
