@@ -17,7 +17,6 @@ class FileLittleFS {
     // void    listDir();
     static boolean exist(const char* name);
     boolean exist();
-    void    purge(int size);
     String  readFile();
     void    readFile(char* buffer);
     size_t  fileSize();
@@ -28,7 +27,6 @@ class FileLittleFS {
     static  void rmDir(const char *dirName);
     static  void rmFile(const char *fileName);
     static  void mkDir(const char* dirName);
-    unsigned size();
     void    rmFile();
 };
 

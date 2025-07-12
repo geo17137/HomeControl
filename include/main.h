@@ -129,6 +129,9 @@ const char* MSG_OK = "set";
 // Current day for circuit2 command (persistent parameter)
 static unsigned joursCircuit2;
 
+char date[20]; // Buffer for date string
+
+
 // Boolean flags for various states
 boolean isWatering;
 boolean isTankFilling;
@@ -149,6 +152,7 @@ boolean mqttConnect;
 boolean supressorFillingMonoStart;
 boolean supressorFillingSecurity;
 boolean monoSurpressorSecurityStarted;
+boolean wifiConnected;
 
 unsigned cmdVanneEst = 1;
 unsigned onVmc;
@@ -173,6 +177,7 @@ static FileLittleFS *fileLogs;
        FileLittleFS *fileDlyParam;
        FileLittleFS* fileGlobalScheduledParam;
        FileLittleFS* filePersistantParam;
+       FileLittleFS* fileDateParam;
 
 // Static instances of various classes
 LiquidCrystal_I2C lcd(I2C_ADR, 4, 5, 6, 16, 11, 12, 13, 14, POSITIVE);

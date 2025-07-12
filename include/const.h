@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.06.15";
+const String version = "2025.07.12";
 
 //#define IO_TEST
 #define PRODUCT_DEVICE
@@ -68,13 +68,14 @@ const String version = "2025.06.15";
 #define DLY_DEFAULT_SCREEN 6 * 60
 // Délai de coupure circuit2 (s)
 #define DLY_DEFAULT_OFF_CIRCUIT2 60*60
-// Délay avnt mise en sécurité supresseur (s)
+// Délay avant mise en sécurité supresseur (s)
 // 3 cycles de remplissage / vidage
-#define DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT 3*170
+#define DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT 11*60
 // Nombre de mises en route supresseur autorisés durant 
 // DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT
 #define MAX_SUPRESSOR_FILLING_IN_TIME 3
-// Période bistable reglage débit (s)
+// Période bistable de reglage débit (s)
+// 20 rapports cycliques possibles (pas de 5%)
 const int PAS_PERIODE_DEBIT = 5;
 // Période du rapport cyclique vanne EST en s
 const int PERIODE_DEBIT = 100;
@@ -93,7 +94,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define INTERVAL_IR_SEND 15*1000
 #define INTERVAL_WIFI_TEST 10*60*10000
 #define INTERVAL_WIFI_STRENG_SEND 30*1000
-#define INTERVAL_MQTT_CONNECT_TEST 5*60*1000
+#define INTERVAL_MQTT_CONNECT_TEST 1000
 #ifdef TIME_SIMULATOR
 #define INTERVAL_SCHEDULE 1000
 #else
@@ -264,7 +265,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define VMC_BOARD_ACTION TOPIC_PREFIX TOPIC_PREFIX "vmc_board/action"
 
 // Time out watch dog (ms)
-#define WDT_TIMEOUT 50
+#define WDT_TIMEOUT 10
 
 // Nom des fichiers
 // Paramétres des cycles programmés sur 24H 
@@ -277,6 +278,9 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define GLOBAL_SCHEDULED_PARAM_FILE_NAME "/globalScheduled.txt"
 // Fichier des données persistantes
 #define FILE_PERSISTANT_DEVICE "/persistant.txt"
+// Fichier date
+#define FILE_DATE "/date.txt"
+
 
 // Contenu du fichier DLY_PARAM_FILE_NAME (valeurs par défaut)
 //  Temporisations monostables par défaut en secondes
@@ -326,6 +330,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define VANNE_EST_VALUE "1:"
 #define PAC_VALUE "1:"
 #define VMC_VALUE "1"
+
+#define DEFAULT_DATE "04/07/2091 08:04:15"
 
 #define DEFAUT_GLOBAL_SCHEDULED_PARAM \
           POWER_COOK_VALUE\

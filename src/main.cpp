@@ -121,6 +121,10 @@
  * 
  * @version 2025.06.15
  * - Modification enregistrement log pour irrigation façade sud
+ *  
+ * @version 2025.07.07
+ * - Autorise un fonctionnement hors ligne si coupure réseau 
+ * - Correction bug dans fileSize
  */
 
 #include "main.h"
@@ -297,16 +301,55 @@ FileLittleFS* initGlobalScheduledParam(boolean force) {
 #endif
   return fileGlobalScheduledParam;
 }
+
 /**
- * @brief Mise à jour de l'heure à partir de l'heure NTP
+ * @brief Instancie cGlobalScheduledParam de classe SimpleParam ces paramètres.
+ * @param force : initialise avec les valeurs par défaut
+ * @return fileDateParam* pointeur vers fichiers ou est stocké la date lors du dernier arret.
+ */
+FileLittleFS* initDateParam(boolean force) {
+  auto* fileDateParam = new FileLittleFS(FILE_DATE);
+  if (!FileLittleFS::exist(FILE_DATE) || force) {
+    fileDateParam->writeFile(DEFAULT_DATE, "w");
+    fileDateParam->close();
+  }
+  //strcpy(date, fileDateParam->readFile().c_str());  
+  return fileDateParam;
+}
+
+/**
+ * @brief 
+ *  La fonction initTime() initialise l'heure en utilisant soit l'heure NTP
+ *  si une connexion Wi-Fi est disponible, soit la date stockée dans un fichier
+ *  en cas d'absence de connexion. Elle configure une instance de ESP32Time 
+ *  avec les paramètres d'heure d'été et met à jour l'horloge interne en fonction
+ *  des données obtenues.
  */
 void initTime() {
   static long gmtOffset_sec = 0, daylightOffset_sec;
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
-  configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
-  struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) {
-    rtc->setTimeStruct(timeinfo);
+  if (wifiConnected && mqttConnect) {
+    configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo)) {
+      rtc->setTimeStruct(timeinfo);    
+    }
+    // strcpy(date, getDate());
+    // fileDateParam->writeFile(date, "w");
+    // fileDateParam->close();
+  }
+  else {
+    // Serial.println(rtc->getDateTime());
+    // Si pas de connexion wifi, initialiser avec la date du fichier
+    strcpy(date, fileDateParam->readFile().c_str());  
+    int day, month, year, hour, minute, second; 
+    sscanf(date, "%02d/%02d/%4d %02d:%02d:%02d", 
+      &day, &month, &year, &hour, &minute, &second);
+    // On initialise l'heure de l'horloge interne
+    rtc->setTime(second, minute, hour, day, month - 1, year); 
+    // Serial.println(rtc->getDateTime());
+    // fileDateParam->writeFile(date, "w");
+    // fileDateParam->close();
   }
   // Test 02/01/2022 14:59:11
   // rtc.setTime(11, 59, 12, 2, 2, 2022);
@@ -324,6 +367,15 @@ const char* getDate() {
   return date;
 }
 
+/**
+ * @brief Initialisation des GPIO
+ * 
+ * Initialise les GPIO utilisés par l'automate.
+ * 
+ * @details
+ * - Pour la carte ES32A08, initialise les GPIO pour les registres à décalage 74HC595 et 74HC165
+ * - Pour les autres cartes, initialise les GPIO pour les relais et entrées digitales
+ */
 void initGpio() {
 #ifdef ES32A08
   pinMode(POWER_LED, OUTPUT);
@@ -402,9 +454,8 @@ void initGpio() {
  */
 void logsWrite(const char* log) {
   char buffer[80];
-  if (fileLogs->size() > MAX_LOG_SIZE)
+  if (fileLogs->fileSize() > MAX_LOG_SIZE)
     fileLogs->rmFile(); // Supprime le fichier si trop gros
-//    fileLogs->writeFile("", "w");
   sprintf(buffer, "%s - %s\n", getDate(), log);
   fileLogs->writeFile(buffer, "a");
 }
@@ -481,20 +532,21 @@ void initWifiStation() {
 #else
 /**
  * @brief Initialisation de la connexion WiFi en mode station
+ * @return true si la connexion est établie, false sinon.
  */
-void initWifiStation() {
+boolean initWifiStation() {
   char buffer[21];
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
 
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("Wifi %s not connected! Rebooting...", ssid);
+    Serial.printf("Wifi %s not connected! ...\n", ssid);
 #ifndef IO_DEBUG    
     backLightOff();
 #endif    
-    delay(5000);
-    ESP.restart();
+    lcdPrintString("WiFi not connected", 1, 0, true);
+    return false;
   }
   WiFiClass::setHostname(hostname);
   WiFi.setAutoReconnect(true);
@@ -510,17 +562,20 @@ void initWifiStation() {
   Serial.println(buffer);
 #ifndef IO_DEBUG    
   lcdPrintString(buffer, 2, 0, true);
-#endif  
+#endif 
+  return true;
 }
 #endif
 
-void initMQTTClient() {
+boolean initMQTTClient() {
+  int essai = 0;
   // Connecting to MQTT server
   mqttClient.setServer(mqttServer, mqttPort);
   mqttClient.setBufferSize(MQTT_MAX_BUFFER_SIZE);
   mqttClient.setCallback(PubSubCallback);
 
-  while (!mqttClient.connected()) {
+  while (!mqttClient.connected() && essai < 3) {
+    essai++;
     Serial.println(String("Connecting to MQTT (") + mqttServer + ")...");
     // Pour un même courtier les clients doivent avoir un id différent
     String clientId = "ESP32Client-";
@@ -528,17 +583,20 @@ void initMQTTClient() {
     // Serial.println(clientId);
     if (mqttClient.connect(clientId.c_str(), mqttUser, mqttPassword)) {
       Serial.println("MQTT client connected");
+      mqttConnect = true;
+      break;
     }
     else {
       Serial.print("\nFailed with state ");
       Serial.println(mqttClient.state());
-      if (WiFi.status() != WL_CONNECTED) {
-        initWifiStation();
-      }
       delay(5000);
     }
   }
-  mqttConnect = true;
+  if (!mqttConnect) {
+    Serial.println("Failed to connect to MQTT broker");
+    lcdPrintString("MQTT not connected", 1, 0, true);
+    return false;
+  }
   // Déclare Pub/Sub topics
   mqttClient.subscribe(TOPIC_GET_PARAM);
   mqttClient.subscribe(TOPIC_WRITE_PARAM);
@@ -563,6 +621,7 @@ void initMQTTClient() {
   mqttClient.subscribe(TOPIC_GET_GLOBAL_SCHED);
   mqttClient.subscribe(TOPIC_WRITE_GLOBAL_SCHED);
   mqttClient.subscribe(TOPIC_MQTT_TEST);
+  return true;
 }
 
 /**
@@ -618,13 +677,19 @@ void setup() {
   Serial.println(buffer);
   lcdPrintString(buffer, 0, 0, true);
   delay(500);
+  fileDateParam = initDateParam(false);  
   fileLogs = new FileLittleFS(LOG_FILE_NAME);
   fileParam = initParam(FORCE_INIT_PARAM);
   fileDlyParam = initDlyParam(FORCE_INIT_DLY_PARAM);
   fileGlobalScheduledParam = initGlobalScheduledParam(FORCE_GLOBAL_SCHEDULED_PARAM);
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
-  initWifiStation();
-  initMQTTClient();
+  wifiConnected = initWifiStation();
+  if (wifiConnected) {
+    initMQTTClient();
+    long rssi = WiFi.RSSI();
+    sprintf(rssi_buffer, "RSSI:%ld", rssi);
+  }
+
   initTime();
   initRotary();
   lcdPrintString(getDate(), 3, 0, true);
@@ -675,7 +740,7 @@ void setup() {
   // Monostable mise en sécurité supresseur
   tache_t_monoSurpressorSecurity = t_cree(monoSurpressorSecurity, cvrtic(DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT) * 1000);
 
-  // Set watch dog timeout
+  // Set watch dog timeout (10s)
 #ifdef ENABLE_WATCHDOG
   esp_task_wdt_init(WDT_TIMEOUT, true); // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);               // add current thread to WDT watch
@@ -711,8 +776,6 @@ void setup() {
 ItemParam item = cParam->get(IRRIGATION, 0);
 joursCircuit2 = item.MMax;
 
-long rssi = WiFi.RSSI();
-sprintf(rssi_buffer, "RSSI:%ld", rssi);
 // item.print();
 // Test de mémorisation de la variable persistante jour
 // item.MMax = 2;
@@ -863,20 +926,25 @@ void monoDefaultDisplay(TimerHandle_t xTimer) {
 }
 
 /**
- * @brief Astable de reglage du débit l'electrovanne sud
- *        Période PAS_PERIODE_DEBIT (5s)
+ * @brief Astable de réglage du débit l'électrovanne sud
+ *        Réalise une commande PWM sur la vanne par pas de 5s
+ *        20 rapports cycliques possible 5%...100%
+ *        Période  = MAX_PAS_PERIODE_DEBIT * 5s = 100s
+ *        cyclicalReport et le même pour toutes les commandes
+ *        (manuelles ou programmées)
+ *
  * @param xTimer 
  */
 void monoDebit(TimerHandle_t xTimer) {
-  int cyclcalReport = cParam->get(VANNE_EST, 3).HMin;
+  int cyclicalReport = cParam->get(VANNE_EST, 3).HMin;
   static int count;
-  if (count < cyclcalReport) {
+  if (count < cyclicalReport) {
     on(O_EV_EST);
-  //  Serial.printf("cyclcalReport=%02d, count=%02d, ON \r", cyclcalReport, count);
+  //  Serial.printf("cyclicalReport=%02d, count=%02d, ON \r", cyclicalReport, count);
   }
   else {
     off(O_EV_EST);
-  //  Serial.printf("cyclcalReport=%02d, count=%02d, OFF\r", cyclcalReport, count);
+  //  Serial.printf("cyclicalReport=%02d, count=%02d, OFF\r", cyclicalReport, count);
   }
   count = ++count % MAX_PAS_PERIODE_DEBIT;
 }
@@ -1339,6 +1407,9 @@ void loop() {
   if (millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     // Serial.println("INTERVAL_MQTT_CONNECT_TEST");
     if (!mqttConnect) {
+      strcpy(date, getDate());
+      fileDateParam->writeFile(date, "w");
+      fileDateParam->close();
       ESP.restart();
     }
     mqttConnectTest = millis();
@@ -1443,7 +1514,7 @@ void loop() {
     schedule();
   }
   // Envoi du niveau en db WiFi RSSI
-  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND) {
+  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND && wifiConnected) {
     tpsWifiSignalStreng = millis();
     if (!isLcdDisplayOn)
       return;

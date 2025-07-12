@@ -275,7 +275,7 @@ void localLoop(void) {
 				// Mettre systématiquement la pompe en route  
 				on(O_POMPE);
 
-				// Gérer la sécurité du supresseur (nombre exessifs de démarrages)
+				// Gérer la sécurité du supresseur (nombre excessifs de démarrages)
 				if (cDlyParam->get(SURPRESSOR_SECURIT_EN)) {
 					// Démarrage monostable la première fois
 					if (!monoSurpressorSecurityStarted) {
@@ -290,7 +290,6 @@ void localLoop(void) {
 						// Serial.println("n_supressorFillingInTime++");
 					}
 				}
-
 				writeLogs("Remplissage surpresseur");
 			}
 		}

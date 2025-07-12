@@ -85,9 +85,6 @@ void FileLittleFS::readFile(char* buffer) {
   strcpy(buffer, content.c_str());
 }
 
-size_t FileLittleFS::fileSize() {
-  return file.size();
-}
 
 boolean FileLittleFS::exist(const char *name) {
   return LittleFS_.exists(name);
@@ -117,14 +114,15 @@ void FileLittleFS::close() {
   file.close();
 }
 
-void FileLittleFS::purge(int size) {
-  if (file.size() > size) {
-    LittleFS_.remove(path);
-  }
+
+size_t FileLittleFS::fileSize() {
+  auto file = LittleFS_.open(path, "r");
+  size_t filesize = file.size();
+  // Don't forget to clean up!
+  file.close();
+  return filesize;
 }
 
-unsigned FileLittleFS::size() {
-  return file.size();
-}
+
 
 #endif
