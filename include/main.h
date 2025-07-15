@@ -204,6 +204,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length);
 void writeLogs(const char * msg);
 void deleteLogs(void);
 const char *getDate(void);
+void setDate(char* date);
 void localLoop(void);
 void schedule();
 boolean isEdge(int nButton);

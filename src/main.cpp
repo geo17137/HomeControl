@@ -306,18 +306,32 @@ FileLittleFS* initGlobalScheduledParam(boolean force) {
 }
 
 /**
- * @brief Instancie cGlobalScheduledParam de classe SimpleParam ces paramètres.
+ * @brief Instancie initDateParam
  * @param force : initialise avec les valeurs par défaut
  * @return fileDateParam* pointeur vers fichiers ou est stocké la date lors du dernier arret.
  */
-FileLittleFS* initDateParam(boolean force) {
-  auto* fileDateParam = new FileLittleFS(FILE_DATE);
-  if (!FileLittleFS::exist(FILE_DATE) || force) {
-    fileDateParam->writeFile(DEFAULT_DATE, "w");
-    fileDateParam->close();
+// FileLittleFS* initDateParam(boolean force) {
+//   auto* fileDateParam = new FileLittleFS(FILE_DATE);
+//   if (!FileLittleFS::exist(FILE_DATE) || force) {
+//     fileDateParam->writeFile(DEFAULT_DATE, "w");
+//     fileDateParam->close();
+//   }
+//   //strcpy(date, fileDateParam->readFile().c_str());  
+//   return fileDateParam;
+// }
+
+/**
+ * @brief Instancie fileLogs.
+ * @param force : initialise avec les valeurs par défaut
+ * @return fileLogs*
+ */
+FileLittleFS* initLogs(boolean force) {
+  auto* fileLogs = new FileLittleFS(LOG_FILE_NAME);
+  if (!FileLittleFS::exist(LOG_FILE_NAME) || force) {
+    fileLogs->writeFile(DEFAULT_DATE, "w");
+    fileLogs->close();
   }
-  //strcpy(date, fileDateParam->readFile().c_str());  
-  return fileDateParam;
+  return fileLogs;
 }
 
 /**
@@ -341,21 +355,13 @@ void initTime() {
     // fileDateParam->writeFile(date, "w");
     // fileDateParam->close();
   }
-  else {
+  // Le module RTC conserve l'heure après reboot 
+  // else {
     // Serial.println(rtc->getDateTime());
     // Si pas de connexion wifi, initialiser avec la date du fichier
-    strcpy(date, fileDateParam->readFile().c_str());  
-    int day, month, year, hour, minute, second; 
-    sscanf(date, "%02d/%02d/%4d %02d:%02d:%02d", 
-      &day, &month, &year, &hour, &minute, &second);
-    // On initialise l'heure de l'horloge interne
-    rtc->setTime(second, minute, hour, day, month - 1, year); 
-    // Serial.println(rtc->getDateTime());
-    // fileDateParam->writeFile(date, "w");
-    // fileDateParam->close();
-  }
-  // Test 02/01/2022 14:59:11
-  // rtc.setTime(11, 59, 12, 2, 2, 2022);
+    //  strcpy(date, fileDateParam->readFile().c_str());  
+    //  setDate(date);
+  // }
 }
 
 const char* getDate() {
@@ -368,6 +374,14 @@ const char* getDate() {
     rtc->getMinute(),
     rtc->getSecond());
   return date;
+}
+
+void setDate(char* date) {
+  int day, month, year, hour, minute, second; 
+  sscanf(date, "%02d/%02d/%4d %02d:%02d:%02d", 
+       &day, &month, &year, &hour, &minute, &second);
+  // On initialise l'heure de l'horloge interne
+  rtc->setTime(second, minute, hour, day, month - 1, year); 
 }
 
 /**
@@ -640,7 +654,8 @@ void setup() {
   display = nullFunc;
   
   Serial.begin(115200);
-  // delay(100);
+  delay(100);
+  Serial.println(bootRaison());
   initGpio();
 #ifdef IO_TEST
   Serial.println("Esp start");
@@ -675,13 +690,12 @@ void setup() {
 #endif
   initDisplay();
   display = ioDisplay;
-
   sprintf(buffer, "HomeCtrl v%s", version.c_str());
   Serial.println(buffer);
   lcdPrintString(buffer, 0, 0, true);
   delay(500);
-  fileDateParam = initDateParam(false);  
-  fileLogs = new FileLittleFS(LOG_FILE_NAME);
+  // fileDateParam = initDateParam(false);
+  fileLogs = initLogs(FORCE_LOGS);
   fileParam = initParam(FORCE_INIT_PARAM);
   fileDlyParam = initDlyParam(FORCE_INIT_DLY_PARAM);
   fileGlobalScheduledParam = initGlobalScheduledParam(FORCE_GLOBAL_SCHEDULED_PARAM);
@@ -776,8 +790,8 @@ void setup() {
 
 // Persistance obligatoire pour ce paramètre
 // Utilisé par la vanne déportée arrosage des tomates
-ItemParam item = cParam->get(IRRIGATION, 0);
-joursCircuit2 = item.MMax;
+  ItemParam item = cParam->get(IRRIGATION, 0);
+  joursCircuit2 = item.MMax;
 
 // item.print();
 // Test de mémorisation de la variable persistante jour
@@ -791,6 +805,7 @@ joursCircuit2 = item.MMax;
 // Serial.println(uxTaskGetStackHighWaterMark(NULL));
 // _ioDisplay();
 // cDlyParam->print();
+  Serial.println("End setup");
 }
 
 /**
@@ -1410,10 +1425,11 @@ void loop() {
   // Vérification cnx broker MQTT
   if (millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     // Serial.println("INTERVAL_MQTT_CONNECT_TEST");
+
     if (!mqttConnect) {
-      strcpy(date, getDate());
-      fileDateParam->writeFile(date, "w");
-      fileDateParam->close();
+      // strcpy(date, getDate());
+      // fileDateParam->writeFile(date, "w");
+      // fileDateParam->close();
       ESP.restart();
     }
     mqttConnectTest = millis();

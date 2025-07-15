@@ -41,6 +41,7 @@ const String version = "2025.07.15";
 #define FORCE_INIT_DLY_PARAM false 
 #define FORCE_GLOBAL_SCHEDULED_PARAM false
 #define FORCE_PERSISTANT_PARAM false
+#define FORCE_LOGS false
 #define MAX_LOG_SIZE 2048
 
 // Taille max des packet MQTT
@@ -331,7 +332,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define PAC_VALUE "1:"
 #define VMC_VALUE "1"
 
-#define DEFAULT_DATE "04/07/2091 08:04:15"
+#define DEFAULT_DATE "04/07/2025 08:04:16"
 
 #define DEFAUT_GLOBAL_SCHEDULED_PARAM \
           POWER_COOK_VALUE\
