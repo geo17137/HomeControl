@@ -125,6 +125,9 @@
  * @version 2025.07.07
  * - Autorise un fonctionnement hors ligne si coupure réseau 
  * - Correction bug dans fileSize
+ * 
+ * @version 2025.07.15
+ * - Ajustement timeout mqtt
  */
 
 #include "main.h"
@@ -1400,10 +1403,11 @@ void loop() {
   // Reset du chien de garde
   if (millis() - tpsWDTReset > INTERVAL_RESET_WDT) {
     esp_task_wdt_reset();
+    delay(1); // Pour éviter le kernel panic
     tpsWDTReset = millis();
   }
 #endif
-  // Reset du chien de garde mqtt
+  // Vérification cnx broker MQTT
   if (millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     // Serial.println("INTERVAL_MQTT_CONNECT_TEST");
     if (!mqttConnect) {
