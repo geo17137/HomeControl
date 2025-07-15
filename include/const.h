@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.07.15";
+const String version = "2025.07.16";
 
 //#define IO_TEST
 #define PRODUCT_DEVICE
@@ -95,9 +95,9 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define INTERVAL_IR_SEND 15*1000
 #define INTERVAL_WIFI_TEST 10*60*10000
 #define INTERVAL_WIFI_STRENG_SEND 30*1000
-#define INTERVAL_MQTT_CONNECT_TEST 10*60*1000
+#define INTERVAL_MQTT_CONNECT_TEST 3*60*1000
 #ifdef TIME_SIMULATOR
-#define INTERVAL_SCHEDULE 1000
+#define INTERVAL_SCHEDULE 100
 #else
 #define INTERVAL_SCHEDULE 60*1000
 #endif
@@ -329,7 +329,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define POWER_COOK_VALUE "1:"
 #define IRRIGATION_VALUE "1:"
 #define VANNE_EST_VALUE "1:"
-#define PAC_VALUE "1:"
+#define PAC_VALUE "0:"
 #define VMC_VALUE "1"
 
 #define DEFAULT_DATE "04/07/2025 08:04:16"
@@ -376,16 +376,16 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00";
-  Les quatres premieres plages concernent la coupure des appareils de cuisson (seul h_max et m_max sont utilisés)
+  Les quatres premieres plages concernent la coupure des appareils de cuisson 
   Les quatres plages suivantes concernent le remplissage du réservoir pour l'irrigation (seul h_min et m_min sont utilisés)
   Les quatres plages suivantes concernent la commande de l'électrovanne EST pour l"arrosage facade SUD
   Les quatres plages suivantes concernent la commande de la PAC
   Les quatres dernières plages concernent la commande de la VMC
 
 - Champs disponibles et utlisés pour d'autres usages
-  POWER_COOK :  h_min, m_min pour toutes les plages pour 3 plages utilisées (1 plage libre)
+  POWER_COOK :  dernière plage libre
   IRRIGATION :  h_max -> intervalle ouverture circuit2 (irrigation tomates), m_max -> jour courant (plage 0 uniquement) (3 plages utilisées)
-  VANNE_EST  :  tout les champs sont utilisés pour 3 plages (1 plage libre)
+  VANNE_EST  :  tout les champs sont utilisés pour 3 plages, plage 4, champ HMin utilisé pour la programmation des rapports cycliques
   PAC        :  tout les champs sont utilisés pour 1 plage (3 plages libres)
   VMC        :  tout les champs sont utilisés (toutes les plages utilisées)
 

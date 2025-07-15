@@ -128,6 +128,9 @@
  * 
  * @version 2025.07.15
  * - Ajustement timeout mqtt
+ * 
+ *  @version 2025.07.16
+ * - Power cooking ON/OFF programming
  */
 
 #include "main.h"
@@ -1071,8 +1074,17 @@ void schedule() {
         item.print();
 #endif
         switch (deviceId) {
-        // Power cook ne comporte qu'une programmation d'arrêt, mise en route par commande manuelle
-        case POWER_COOK:
+          case POWER_COOK:
+          #ifdef DEBUG_OUTPUT_SCHEDULE
+          Serial.printf("%02d:%02d off(O_FOUR)\n", h, m);
+#endif
+#ifdef PERSISTANT_POWER_COOK            
+          cPersistantParam->set(POWER_COOK, 0);
+          filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+#endif
+          on(O_FOUR);
+          // Mise à jour de l'IHM déportée
+          mqttClient.publish(TOPIC_STATUS_CUISINE, "on"); 
           break;
 
         case IRRIGATION: {
@@ -1812,6 +1824,8 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_WATCH_DOG_OFF ----------------------
   if (cmp(topic, TOPIC_WATCH_DOG_OFF)) {
     esp_task_wdt_delete(NULL);
+    delay(1);
+    // Serial.println("WD disabled"); 
     return;
   }
   //------------------  TOPIC_GLOBAL_SCHED_GET ----------------------
