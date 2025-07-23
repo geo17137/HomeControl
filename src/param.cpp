@@ -23,11 +23,13 @@ Param::Param(const char* param) {
   setParam();
 }
 
+/**
+ * Print on serial param data
+ */
 void Param::printStrParam() {   
   int j = 1;
   for (int i = 0; i < N_DEVICES * TAILLE_PLAGE * N_PLAGES - 1; i++) {
     Serial.print(_sparam[i]);
-   // Serial.printf("  %03d, %d\n", i, i % (TAILLE_PLAGE * N_PLAGES) + 1);
     if (((i == (TAILLE_PLAGE * N_PLAGES * j) - 1) || 
          (i == (TAILLE_PLAGE * N_PLAGES * j))) &&
           i != 0) { 
