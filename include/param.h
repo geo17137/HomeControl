@@ -62,6 +62,8 @@ public:
    */
   char* getStr();
 
+  void printStrParam();
+
   /**
    * @brief Set the parameters from a string.
    * @param str A string containing the parameters.

@@ -131,6 +131,10 @@
  * 
  *  @version 2025.07.16
  * - Power cooking ON/OFF programming
+ * 
+ *  @version 2025.07.23
+ * - Set default parameter main.h : PARAM 
+ * - Create printStrParam in class Param
  */
 
 #include "main.h"
@@ -238,11 +242,12 @@ FileLittleFS* initParam(boolean force) {
   auto* fileParam = new FileLittleFS(PARAM_FILE_NAME);
   if (!FileLittleFS::exist(PARAM_FILE_NAME) || force) {
     fileParam->writeFile(PARAM, "w");
-  }
+  } 
   cParam = new Param(fileParam->readFile().c_str());
   fileParam->close();
 #ifdef DEBUG_OUTPUT
-  cParam->print();
+//  cParam->print();
+//  cParam->printStrParam();
 #endif
   return fileParam;
 }

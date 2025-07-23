@@ -1,7 +1,7 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.07.16";
+const String version = "2025.07.23";
 
 //#define IO_TEST
 #define PRODUCT_DEVICE
@@ -37,7 +37,7 @@ const String version = "2025.07.16";
 // #define DEBUG_HEAP
 //------------------------
 
-#define FORCE_INIT_PARAM false  
+#define FORCE_INIT_PARAM true  
 #define FORCE_INIT_DLY_PARAM false 
 #define FORCE_GLOBAL_SCHEDULED_PARAM false
 #define FORCE_PERSISTANT_PARAM false
@@ -376,7 +376,7 @@ const char *PARAM = "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00" \
                     "0:00:00:00:00:0:00:00:00:00:0:00:00:00:00:0:00:00:00:00";
-  Les quatres premieres plages concernent la coupure des appareils de cuisson 
+  Les quatres premieres plages concernent la mise sous tension des appareils de cuisson 
   Les quatres plages suivantes concernent le remplissage du réservoir pour l'irrigation (seul h_min et m_min sont utilisés)
   Les quatres plages suivantes concernent la commande de l'électrovanne EST pour l"arrosage facade SUD
   Les quatres plages suivantes concernent la commande de la PAC
