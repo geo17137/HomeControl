@@ -135,6 +135,9 @@
  *  @version 2025.07.23
  * - Set default parameter main.h : PARAM 
  * - Create printStrParam in class Param
+ * 
+ *  @version 2025.07.28
+ * - reconnxion auto WiFi et Mqtt
  */
 
 #include "main.h"
@@ -184,6 +187,23 @@ void print(const char* msg, boolean local) {
 #endif
 }
 #endif
+
+/**
+ *@brief 
+ * Delai non bloquant
+ * @param ms 
+ */
+void dly(unsigned long ms) {
+  uint32_t start = micros();
+
+  while (ms > 0) {
+    yield();
+    while (ms > 0 && (micros() - start) >= 1000) {
+      ms--;
+      start += 1000;
+    }
+  }
+}
 
 void printMqttDebugValue(const char* value) {
   mqttClient.publish(TOPIC_DEBUG_VALUE, value);
@@ -559,18 +579,18 @@ void initWifiStation() {
  * @brief Initialisation de la connexion WiFi en mode station
  * @return true si la connexion est établie, false sinon.
  */
-boolean initWifiStation() {
+boolean initWifiStation(boolean flagDisplay) {
   char buffer[21];
-  Serial.begin(115200);
   WiFi.mode(WIFI_STA);
-
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("Wifi %s not connected! ...\n", ssid);
+    if (flagDisplay)  
+      Serial.printf("Wifi %s not connected! ...\n", ssid);
 #ifndef IO_DEBUG    
-    backLightOff();
-#endif    
-    lcdPrintString("WiFi not connected", 1, 0, true);
+    // backLightOff();
+#endif
+    if (flagDisplay)    
+      lcdPrintString("WiFi not connected", 1, 0, true);
     return false;
   }
   WiFiClass::setHostname(hostname);
@@ -578,30 +598,46 @@ boolean initWifiStation() {
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   initOTA();
-  sprintf(buffer, "SSID : %s", WiFi.SSID().c_str());
-#ifndef IO_DEBUG    
-  lcdPrintString(buffer, 1, 0, true);
-#endif
+
+  if (flagDisplay) {
+    sprintf(buffer, "SSID : %s", WiFi.SSID().c_str());
+    lcdPrintString(buffer, 1, 0, true);
+  } 
+
   Serial.println(buffer);
   sprintf(buffer, "IP : %s", WiFi.localIP().toString().c_str());
   Serial.println(buffer);
-#ifndef IO_DEBUG    
-  lcdPrintString(buffer, 2, 0, true);
+#ifndef IO_DEBUG
+  if (flagDisplay)    
+    lcdPrintString(buffer, 2, 0, true);
 #endif 
   return true;
 }
 #endif
 
+/**
+ * @brief Initialisation du client MQTT
+ * 
+ * @details
+ * - Configure le client MQTT avec le serveur, le port et les callbacks.
+ * - Tente de se connecter au serveur MQTT.
+ * - En cas d'échec, réessaie plusieurs fois avec un délai.
+ * - Abonne aux topics nécessaires.
+ * 
+ * @return true si la connexion est établie, false sinon.
+ */
+
 boolean initMQTTClient() {
   int essai = 0;
   // Connecting to MQTT server
   mqttClient.setServer(mqttServer, mqttPort);
-  mqttClient.setBufferSize(MQTT_MAX_BUFFER_SIZE);
+  // Fixé dans PubSubClient.h
+  ///mqttClient.setBufferSize(MQTT_MAX_BUFFER_SIZE);
   mqttClient.setCallback(PubSubCallback);
-
+  mqttConnect = false;
   while (!mqttClient.connected() && essai < 3) {
     essai++;
-    Serial.println(String("Connecting to MQTT (") + mqttServer + ")...");
+    // Serial.println(String("Connecting to MQTT (") + mqttServer + ")...");
     // Pour un même courtier les clients doivent avoir un id différent
     String clientId = "ESP32Client-";
     clientId += String(random(0xffff), HEX);
@@ -611,15 +647,9 @@ boolean initMQTTClient() {
       mqttConnect = true;
       break;
     }
-    else {
-      Serial.print("\nFailed with state ");
-      Serial.println(mqttClient.state());
-      delay(5000);
-    }
   }
   if (!mqttConnect) {
     Serial.println("Failed to connect to MQTT broker");
-    lcdPrintString("MQTT not connected", 1, 0, true);
     return false;
   }
   // Déclare Pub/Sub topics
@@ -645,7 +675,7 @@ boolean initMQTTClient() {
 
   mqttClient.subscribe(TOPIC_GET_GLOBAL_SCHED);
   mqttClient.subscribe(TOPIC_WRITE_GLOBAL_SCHED);
-  mqttClient.subscribe(TOPIC_MQTT_TEST);
+//  mqttClient.subscribe(TOPIC_MQTT_TEST);
   return true;
 }
 
@@ -698,7 +728,7 @@ void setup() {
 #endif
   initDisplay();
   display = ioDisplay;
-  sprintf(buffer, "HomeCtrl v%s", version.c_str());
+  sprintf(buffer, "HomeCtrl v%s", version);
   Serial.println(buffer);
   lcdPrintString(buffer, 0, 0, true);
   delay(500);
@@ -708,11 +738,11 @@ void setup() {
   fileDlyParam = initDlyParam(FORCE_INIT_DLY_PARAM);
   fileGlobalScheduledParam = initGlobalScheduledParam(FORCE_GLOBAL_SCHEDULED_PARAM);
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
-  wifiConnected = initWifiStation();
+  wifiConnected = initWifiStation(true);
   if (wifiConnected) {
     initMQTTClient();
-    long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%ld", rssi);
+    //long rssi = WiFi.RSSI();
+    sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
   }
 
   initTime();
@@ -1407,87 +1437,84 @@ void setVmc(int cmd) {
 // Boucle de scrutation
 //-----------------------------------
 void loop() {
-  static long tps = 0;
-  static long tpsIr = 0;
-  static long tpsRot = 0;
-  static long tpsRotary = 0;
-  static long tpsProg = 0;
-  static long tpsRotaryUpdt = 0;
-  static long tpsSchedule = 0;
-  static long tpsWifiTest = 0;
-  static long tpsWDTReset = 0;
-  static long tpsWifiSignalStreng = INTERVAL_WIFI_STRENG_SEND;
+  static ulong tps = 0;
+  static ulong tpsIr = 0;
+  static ulong tpsRot = 0;
+  static ulong tpsRotary = 0;
+  static ulong tpsProg = 0;
+  static ulong tpsRotaryUpdt = 0;
+  static ulong tpsSchedule = 0;
+  static ulong tpsWifiTest = 0;
+  static ulong tpsWDTReset = 0;
+  static ulong tpsWifiSignalStreng = INTERVAL_WIFI_STRENG_SEND;
   static unsigned wifiTest = 0;
   static unsigned mqttConnectTest=0;
   static boolean esp_task_wdt = true;
+  static unsigned rotate;
 
 #ifdef EXEC_TIME_MEASURE
   time_exec_start();
 #endif
+ 
+  ArduinoOTA.handle();
 #ifdef IO_TEST
-  ArduinoOTA.handle();
   return;
-#endif   
-  ArduinoOTA.handle();
+#endif    
   mqttClient.loop();
   
 #ifdef ENABLE_WATCHDOG
   // Reset du chien de garde
   if (millis() - tpsWDTReset > INTERVAL_RESET_WDT) {
+    tpsWDTReset = millis();
     esp_task_wdt_reset();
     delay(1); // Pour éviter le kernel panic
-    tpsWDTReset = millis();
   }
 #endif
+
+  // Test wifi et reconnexion si nécessaire
+  // if (tpsWifiTest > INTERVAL_WIFI_TEST) {
+  //   int i = 0;
+  //   tpsWifiTest = millis();
+  //   while (!WiFi.isConnected() && i++ < 3) { 
+  //     Serial.println("WiFi not connected, retrying...");
+  //     WiFi.reconnect();
+  //     dly(200);
+  //     if (WiFi.isConnected()) {
+  //       wifiConnected = true;
+  //       Serial.println("WiFi connected");
+  //       break;
+  //     }
+  //     else {
+  //       Serial.println("WiFi not connected");
+  //       wifiConnected = false;
+  //     }
+  //   }
+  // }
+
   // Vérification cnx broker MQTT
-  if (millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
-    // Serial.println("INTERVAL_MQTT_CONNECT_TEST");
-
-    if (!mqttConnect) {
-      // strcpy(date, getDate());
-      // fileDateParam->writeFile(date, "w");
-      // fileDateParam->close();
-      ESP.restart();
-    }
+  if (!mqttClient.connected() && 
+      millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     mqttConnectTest = millis();
-    mqttConnect = false;
-    mqttClient.publish(TOPIC_MQTT_TEST, "");
+    if (initWifiStation(false)) 
+      if (initMQTTClient()) 
+        lcdPrintChar('c', 2, 0);
+      else
+        lcdPrintChar('n', 2, 0);
+    else
+        lcdPrintChar('n', 2, 0);
   }
- 
-//  if (millis() - tpsWifiTest > INTERVAL_WIFI_TEST) {
-//    tpsWifiTest = millis();
-    // Test conx WiFi  
-    // while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    //   WiFi.reconnect();
-    //   esp_task_wdt_delete(NULL);
-    //   esp_task_wdt = false;
-    //   delay(5000);
-    //   if (wifiTest++ == 6) {
-    //     logsWrite("WiFi deconnected");
-    //     ESP.restart();
-    //   }
-    // }
-    // if (!esp_task_wdt) {
-    //   wifiTest = 0;
-    //   esp_task_wdt_init(WDT_TIMEOUT, true); // enable panic so ESP32 restarts
-    //   esp_task_wdt_add(NULL);               // add current thread to WDT watch
-    //   esp_task_wdt = true;
-    // }
-
-    // if (!mqttClient.connected()) {
-    //   initMQTTClient();
-    // }
-  //}
 
   // Scruter les ports E/S toutes les s pour les afficher sur LCD
   // Affichage uniquemment sur nouvel état des ports E/S
-  static unsigned uPortIn_1 = 0xFFFFFFFF;
+  static unsigned uPortIn_1  = 0xFFFFFFFF;
   static unsigned uPortOut_1 = 0xFFFFFFFF;
 
   if (millis() - tpsProg > INTERVAL_PORT_READ) {
     tpsProg = millis();
 
     static boolean bPac;
+    // Faire clignoter le bit PAC sur lcd si en cours d'arret
+
     if (irSendPacOff) {
       bPac = !bPac;
       lcdPrintChar((bPac) ? '0' : '1', 2, 4);
@@ -1496,11 +1523,12 @@ void loop() {
     // Ne mettre à jour l'affichage que si changement
     // testPortIO_0() calcule la somme des bits IO en 
     // tenant compte de leur poids
+    boolean setDisplay = false;
     unsigned uPortOut_0 = testPortIO_O();
-    
+
     if (uPortOut_1 != uPortOut_0) {
       uPortOut_1 = uPortOut_0;
-      display();
+      setDisplay = true;
     }
 
     // Ne mettre à jour l'affichage que si changement
@@ -1508,9 +1536,9 @@ void loop() {
    
     if (uPortIn_1 != uPortIn_0) {
       uPortIn_1 = uPortIn_0;
-      display();
+      setDisplay = true;
     }
-
+    if (setDisplay) display();
   }
 
   // Scrutation évenements E/S toutes les 100 ms
@@ -1523,11 +1551,11 @@ void loop() {
 
   // Mise à jour de l'indicateur tournant sur l'écran lcd toute les 500 ms
   // isLcdDisplayOn = true;
-  if (millis() - tpsRot > INTERVAL_ROTATE_DISPLAY && isLcdDisplayOn) {
+  if (isLcdDisplayOn && millis() - tpsRot > INTERVAL_ROTATE_DISPLAY ) {
     tpsRot = millis();
-    static int rotate;
     lcdPrintChar(progress[rotate++ % 3], 0, 0);  // 2, 19
   }
+  
   // Test appuy sur bouton rotary  
   if (millis() - tpsRotary > INTERVAL_ROTATARY_SCHEDULE) {
     tpsRotary = millis();
@@ -1539,7 +1567,7 @@ void loop() {
   }
 
   // Envoi toutes les 15s d'une commande IR off sur la PAC si cycle d'arrèt
-  if (irSendPacOff && (millis() - tpsIr) > INTERVAL_IR_SEND) {
+  if (irSendPacOff && millis() - tpsIr > INTERVAL_IR_SEND) {
     tpsIr = millis();
     mqttClient.publish(TOPIC_PAC_IR_OFF, "");  
   }
@@ -1550,17 +1578,20 @@ void loop() {
     tpsSchedule = millis();
     schedule();
   }
+  
   // Envoi du niveau en db WiFi RSSI
-  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND && wifiConnected) {
+  if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND ) {
     tpsWifiSignalStreng = millis();
-    if (!isLcdDisplayOn)
+    if (!isLcdDisplayOn || !wifiConnected) {
       return;
-    long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%ld", rssi);
+    //long rssi = WiFi.RSSI();
+      sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
     // Test niveau RSSI
     // mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
-    lcdPrintRssi(&rssi_buffer[5]);
-  }
+      lcdPrintRssi(rssi_buffer);
+    }
+  }  
+  
   // Suspend pour 5s, ne pas utiliser ici
   // esp_sleep_enable_timer_wakeup(5000000); // 5 seconds
   // esp_light_sleep_start();
@@ -1579,14 +1610,17 @@ void loop() {
  * @param length 
  */
 void PubSubCallback(char* topic, byte* payload, unsigned int length) {
-  String strPayload = "";
-
+  // String strPayload = "";
+  // Préserver le payload dans un buffer, utile que si on se réutilise payload
+  // dans une commande MQTT
+  static char bufferPayload[512];
+  memcpy(bufferPayload, payload, length);
 #ifdef DEBUG_OUTPUT
   char buffer[80];
 #endif
-  for (unsigned int i = 0; i < length; i++) {
-    strPayload += static_cast<char>(payload[i]);
-  }
+  // for (unsigned int i = 0; i < length; i++) {
+  //   strPayload += static_cast<char>(payload[i]);
+  // }
 #ifdef DEBUG_OUTPUT_
   Serial.print(topic);
   Serial.println(strPayload.c_str());
@@ -1621,13 +1655,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     return;
   }
   //------------------  TOPIC_WRITE_PARAM ----------------------
-  // Attention taille du message important 
+  // Attention taille du message importante 
   if (cmp(topic, TOPIC_WRITE_PARAM)) {
-    cParam->setStr(strPayload.c_str());
+    cParam->setStr(bufferPayload);
 #ifdef DEBUG_OUTPUT
     print(cParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileParam->writeFile(strPayload.c_str(), "w");
+    fileParam->writeFile(bufferPayload, "w");
     return;
   }
   //------------------  TOPIC_GET_DLY_PARAM ----------------------
@@ -1638,11 +1672,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_WRITE_DLY_PARAM ----------------------
   if (cmp(topic, TOPIC_WRITE_DLY_PARAM)) {
-    cDlyParam->setStr(strPayload.c_str());
+    cDlyParam->setStr(bufferPayload);
 #ifdef DEBUG_OUTPUT
     print(cDlyParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileDlyParam->writeFile(strPayload.c_str(), "w");
+    fileDlyParam->writeFile(bufferPayload, "w");
     if (cDlyParam->get(SUPRESSOR_EN)) {
        mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "off");
        supressorFillingSecurity = false;
@@ -1672,7 +1706,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_ARROSAGE ----------------------
   if (cmp(topic, TOPIC_CMD_ARROSAGE)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
     switch (cmd) {
     case 0:
       // Serial.println("TOPIC_CMD_ARROSAGE Stop watering");
@@ -1694,7 +1728,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_IRRIGATION ----------------------
   if (cmp(topic, TOPIC_CMD_IRRIGATION)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
     if (cmd)
       startTankFilling();
     else
@@ -1703,7 +1737,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_CUISINE ----------------------
   if (cmp(topic, TOPIC_CMD_CUISINE)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
 #ifdef PERSISTANT_POWER_COOK   
     cPersistantParam->set(POWER_COOK, cmd);
     filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1720,13 +1754,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_VMC ----------------------
   if (cmp(topic, TOPIC_CMD_VMC)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
     setVmc(cmd);
     return;
   }
   //------------------  TOPIC_CMD_VANNE_EST ----------------------
   if (cmp(topic, TOPIC_CMD_VANNE_EST)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
     if (cmd) {
       on(O_TRANSFO);
       on(O_EV_EST);
@@ -1742,15 +1776,15 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     }
     return;
 #ifdef DEBUG_OUTPUT
-    sprintf(buffer, "topic : %s, port %s\n", topic, strPayload.c_str());
+    sprintf(buffer, "topic : %s, port %s\n", topic, bufferPayload.c_str());
     print(buffer, OUTPUT_PRINT);
 #endif
-    // cmdVanneEst = cmp(strPayload.c_str(), "1");
+    // cmdVanneEst = cmp(bufferPayload.c_str(), "1");
     return;
   }
   //------------------  TOPIC_CMD_PAC ----------------------
   if (cmp(topic, TOPIC_CMD_PAC)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    unsigned cmd = atoi(bufferPayload);
     // Logique inversée pour relai PAC
     // 1 = arret
     if (cmd) {
@@ -1819,11 +1853,14 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_GET_VERSION ----------------------
   if (cmp(topic, TOPIC_GET_VERSION)) {
-    long rssi = WiFi.RSSI();
-    sprintf(rssi_buffer, "RSSI:%ld", rssi);
-    String info = version + "\n" + WiFi.localIP().toString() + ", " + rssi_buffer + "db\n" + String(getDate());
+    // long rssi = WiFi.RSSI();
+    // sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
+    static char info[128];
+    sprintf(info, "%s\n%s, RSSI:%lddb\n%s", 
+                   version, WiFi.localIP().toString().c_str(), WiFi.RSSI(), getDate());
+    // String info = String(version) + "\n" + WiFi.localIP().toString() + ", " + rssi_buffer + "db\n" + String(getDate());
     // Serial.println(info);
-    mqttClient.publish(TOPIC_READ_VERSION, info.c_str());
+    mqttClient.publish(TOPIC_READ_VERSION, info);
     return;
   }
   //------------------  TOPIC_WATCH_DOG_OFF ----------------------
@@ -1841,17 +1878,17 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_GLOBAL_SCHED_WRITE ----------------------
   if (cmp(topic, TOPIC_WRITE_GLOBAL_SCHED)) {
     // Mettre à jour l'objet
-    cGlobalScheduledParam->setStr(strPayload.c_str());
+    cGlobalScheduledParam->setStr(bufferPayload);
 #ifdef DEBUG_OUTPUT
     print(cGlobalScheduledParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileGlobalScheduledParam->writeFile(strPayload.c_str(), "w");
+    fileGlobalScheduledParam->writeFile(bufferPayload, "w");
     return;
   }
   //------------------  TOPIC_TEST_RESULT ----------------------
-  if (cmp(topic, TOPIC_MQTT_TEST)) {
-    mqttConnect = true;   
-    // Serial.println("INTERVAL_MQTT_CONNECT_TEST_OK"); 
-    return;
-  }
+  // if (cmp(topic, TOPIC_MQTT_TEST)) {
+  //   mqttConnect = true;   
+  //   // Serial.println("INTERVAL_MQTT_CONNECT_TEST_OK"); 
+  //   return;
+  // }
 }

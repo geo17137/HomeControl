@@ -20,6 +20,8 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+const char* version = "2025.07.28";
+
 // Definitions for print modes
 #define WEB_PRINT false
 #define LOCAL_PRINT true
@@ -140,10 +142,14 @@ char date[20]; // Buffer for date string
 
 
 // Boolean flags for various states
+// Arrosage en cours
 boolean isWatering;
+// Remplissage du réservoir d'eau en cours
 boolean isTankFilling;
+// Remplissage du supresseur en cours
 boolean startSupressorFilling2;
 boolean startSupressorFilling;
+
 boolean irSendPacOff;
 boolean msgRearm;
 boolean erreurSupresseur;
@@ -184,7 +190,7 @@ static FileLittleFS *fileLogs;
        FileLittleFS *fileDlyParam;
        FileLittleFS* fileGlobalScheduledParam;
        FileLittleFS* filePersistantParam;
-       FileLittleFS* fileDateParam;
+//     FileLittleFS* fileDateParam;
 
 // Static instances of various classes
 LiquidCrystal_I2C lcd(I2C_ADR, 4, 5, 6, 16, 11, 12, 13, 14, POSITIVE);
