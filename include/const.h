@@ -265,7 +265,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define VMC_BOARD_ACTION TOPIC_PREFIX TOPIC_PREFIX "vmc_board/action"
 
 // Time out watch dog (ms)
-#define WDT_TIMEOUT 10
+#define WDT_TIMEOUT 100
 
 // Nom des fichiers
 // Paramétres des cycles programmés sur 24H 

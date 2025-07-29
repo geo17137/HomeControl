@@ -1616,17 +1616,17 @@ void loop() {
  * @param length 
  */
 void PubSubCallback(char* topic, byte* payload, unsigned int length) {
-  // String strPayload = "";
+  String strPayload = "";
   // Préserver le payload dans un buffer, utile que si on se réutilise payload
   // dans une commande MQTT
-  static char bufferPayload[512];
-  memcpy(bufferPayload, payload, length);
+  //static char bufferPayload[512];
+  //memcpy(bufferPayload, payload, length + 4);
 #ifdef DEBUG_OUTPUT
   char buffer[80];
 #endif
-  // for (unsigned int i = 0; i < length; i++) {
-  //   strPayload += static_cast<char>(payload[i]);
-  // }
+  for (unsigned int i = 0; i < length; i++) {
+    strPayload += static_cast<char>(payload[i]);
+  }
 #ifdef DEBUG_OUTPUT_
   Serial.print(topic);
   Serial.println(strPayload.c_str());
@@ -1663,11 +1663,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_WRITE_PARAM ----------------------
   // Attention taille du message importante 
   if (cmp(topic, TOPIC_WRITE_PARAM)) {
-    cParam->setStr(bufferPayload);
+    cParam->setStr(strPayload.c_str());
 #ifdef DEBUG_OUTPUT
     print(cParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileParam->writeFile(bufferPayload, "w");
+    fileParam->writeFile(strPayload.c_str(), "w");
     return;
   }
   //------------------  TOPIC_GET_DLY_PARAM ----------------------
@@ -1678,11 +1678,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_WRITE_DLY_PARAM ----------------------
   if (cmp(topic, TOPIC_WRITE_DLY_PARAM)) {
-    cDlyParam->setStr(bufferPayload);
+    cDlyParam->setStr(strPayload.c_str());
 #ifdef DEBUG_OUTPUT
     print(cDlyParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileDlyParam->writeFile(bufferPayload, "w");
+    fileDlyParam->writeFile(strPayload.c_str(), "w");
     if (cDlyParam->get(SUPRESSOR_EN)) {
        mqttClient.publish(TOPIC_SUPRESSOR_SECURITY, "off");
        supressorFillingSecurity = false;
@@ -1712,7 +1712,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_ARROSAGE ----------------------
   if (cmp(topic, TOPIC_CMD_ARROSAGE)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
     switch (cmd) {
     case 0:
       // Serial.println("TOPIC_CMD_ARROSAGE Stop watering");
@@ -1734,7 +1734,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_IRRIGATION ----------------------
   if (cmp(topic, TOPIC_CMD_IRRIGATION)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
     if (cmd)
       startTankFilling();
     else
@@ -1743,7 +1743,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_CUISINE ----------------------
   if (cmp(topic, TOPIC_CMD_CUISINE)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
 #ifdef PERSISTANT_POWER_COOK   
     cPersistantParam->set(POWER_COOK, cmd);
     filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1760,13 +1760,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_VMC ----------------------
   if (cmp(topic, TOPIC_CMD_VMC)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
     setVmc(cmd);
     return;
   }
   //------------------  TOPIC_CMD_VANNE_EST ----------------------
   if (cmp(topic, TOPIC_CMD_VANNE_EST)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
     if (cmd) {
       on(O_TRANSFO);
       on(O_EV_EST);
@@ -1790,7 +1790,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_PAC ----------------------
   if (cmp(topic, TOPIC_CMD_PAC)) {
-    unsigned cmd = atoi(bufferPayload);
+    unsigned cmd = atoi(strPayload.c_str());
     // Logique inversée pour relai PAC
     // 1 = arret
     if (cmd) {
@@ -1873,7 +1873,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   if (cmp(topic, TOPIC_WATCH_DOG_OFF)) {
     esp_task_wdt_delete(NULL);
     delay(1);
-    // Serial.println("WD disabled"); 
+    //Serial.println("WD disabled"); 
     return;
   }
   //------------------  TOPIC_GLOBAL_SCHED_GET ----------------------
@@ -1884,11 +1884,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_GLOBAL_SCHED_WRITE ----------------------
   if (cmp(topic, TOPIC_WRITE_GLOBAL_SCHED)) {
     // Mettre à jour l'objet
-    cGlobalScheduledParam->setStr(bufferPayload);
+    cGlobalScheduledParam->setStr(strPayload.c_str());
 #ifdef DEBUG_OUTPUT
     print(cGlobalScheduledParam->getStr(), OUTPUT_PRINT);
 #endif
-    fileGlobalScheduledParam->writeFile(bufferPayload, "w");
+    fileGlobalScheduledParam->writeFile(strPayload.c_str(), "w");
     return;
   }
   //------------------  TOPIC_TEST_RESULT ----------------------
