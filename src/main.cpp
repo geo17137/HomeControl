@@ -138,12 +138,18 @@
  * 
  *  @version 2025.07.28
 <<<<<<< HEAD
+<<<<<<< HEAD
  * - reconnxion auto WiFi et Mqtt
 =======
+=======
+>>>>>>> master
  * - reconnexion auto WiFi et Mqtt
  * 
  *  @version 2025.07.29
  * - Suppress serial message on wifi mqtt brocker reconnect
+<<<<<<< HEAD
+>>>>>>> master
+=======
 >>>>>>> master
  */
 
@@ -635,7 +641,11 @@ boolean initWifiStation(boolean flagDisplay) {
  */
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 boolean initMQTTClient() {
+=======
+boolean initMQTTClient(boolean flagDisplay) {
+>>>>>>> master
 =======
 boolean initMQTTClient(boolean flagDisplay) {
 >>>>>>> master
@@ -662,7 +672,12 @@ boolean initMQTTClient(boolean flagDisplay) {
   }
   if (!mqttConnect) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     Serial.println("Failed to connect to MQTT broker");
+=======
+    if (flagDisplay) 
+      Serial.println("Failed to connect to MQTT broker");
+>>>>>>> master
 =======
     if (flagDisplay) 
       Serial.println("Failed to connect to MQTT broker");
@@ -759,7 +774,11 @@ void setup() {
   wifiConnected = initWifiStation(true);
   if (wifiConnected) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     initMQTTClient();
+=======
+    initMQTTClient(true);
+>>>>>>> master
 =======
     initMQTTClient(true);
 >>>>>>> master
@@ -1519,7 +1538,11 @@ void loop() {
     mqttConnectTest = millis();
     if (initWifiStation(false)) 
 <<<<<<< HEAD
+<<<<<<< HEAD
       if (initMQTTClient()) 
+=======
+      if (initMQTTClient(false)) 
+>>>>>>> master
 =======
       if (initMQTTClient(false)) 
 >>>>>>> master
