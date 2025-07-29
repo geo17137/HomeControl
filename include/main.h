@@ -20,7 +20,11 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+<<<<<<< HEAD
 const char* version = "2025.07.28";
+=======
+const char* version = "2025.07.29";
+>>>>>>> master
 
 // Definitions for print modes
 #define WEB_PRINT false
