@@ -1619,18 +1619,19 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   String strPayload = "";
   // Préserver le payload dans un buffer, utile que si on se réutilise payload
   // dans une commande MQTT
-  //static char bufferPayload[512];
-  //memcpy(bufferPayload, payload, length + 4);
+  // static char bufferPayload[512];
+  // memcpy(bufferPayload, payload, length + 4);
 #ifdef DEBUG_OUTPUT
   char buffer[80];
 #endif
   for (unsigned int i = 0; i < length; i++) {
     strPayload += static_cast<char>(payload[i]);
   }
-#ifdef DEBUG_OUTPUT_
+// #ifdef DEBUG_OUTPUT_
   Serial.print(topic);
+  Serial.print(" : ");
   Serial.println(strPayload.c_str());
-#endif
+// #endif
 
   //------------------  TOPIC_GET_PARAM ----------------------
   if (cmp(topic, TOPIC_GET_PARAM)) {
@@ -1707,6 +1708,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       // gpioRead(O_EV_EST),
       vmcMode,
       gpioReadPac());
+      // Serial.println(tabValue);
     mqttClient.publish(TOPIC_GPIO, tabValue);
     return;
   }

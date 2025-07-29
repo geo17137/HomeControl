@@ -2,7 +2,7 @@
 #define CONST_H
 
 //#define IO_TEST
-#define PRODUCT_DEVICE
+// #define PRODUCT_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
 #ifdef  PRODUCT_DEVICE
@@ -325,10 +325,12 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define VMC        4
 #define MAX_ITEMS_GLOBAL_SCHEDULED_PARAM 5
 
+
 #define POWER_COOK_VALUE "1:"
 #define IRRIGATION_VALUE "1:"
 #define VANNE_EST_VALUE "1:"
-#define PAC_VALUE "0:"
+// PAC_VALUE 1 : Pac arretée
+#define PAC_VALUE "1:"
 #define VMC_VALUE "1"
 
 #define DEFAULT_DATE "04/07/2025 08:04:16"

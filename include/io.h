@@ -65,7 +65,9 @@ inline const char* gpioRead(int gpio) {
 
 /**
  * @brief Lecture pac pour savoir si envoi ir en cours
- * 
+ *  GIOP PORT 0 : PAC arretée 
+ *  GIOP PORT 1 : PAC sous tension 
+ *  GIOP PORT 2 : PAC en cours d'arrèt 
  * @return const char* 
  */
 inline const char* gpioReadPac() {
