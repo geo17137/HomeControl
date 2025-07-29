@@ -1,8 +1,6 @@
 #ifndef CONST_H
 #define CONST_H
 
-const String version = "2025.07.23";
-
 //#define IO_TEST
 #define PRODUCT_DEVICE
 #define ES32A08
@@ -37,15 +35,16 @@ const String version = "2025.07.23";
 // #define DEBUG_HEAP
 //------------------------
 
-#define FORCE_INIT_PARAM true  
+#define FORCE_INIT_PARAM false  
 #define FORCE_INIT_DLY_PARAM false 
 #define FORCE_GLOBAL_SCHEDULED_PARAM false
 #define FORCE_PERSISTANT_PARAM false
 #define FORCE_LOGS false
 #define MAX_LOG_SIZE 2048
 
-// Taille max des packet MQTT
-#define MQTT_MAX_BUFFER_SIZE 512
+// Taille max des packet MQTT 
+// #define MQTT_MAX_BUFFER_SIZE 512
+// Défini dans PubSubClient.h
 
 // Remplacer avec les caractéristiques de votre réseau
 // #define WIFI_MANAGER
@@ -89,13 +88,13 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 // Délai des appels dans loop en ms
 #define INTERVAL_PORT_READ  1000
 #define INTERVAL_IO_SCRUT   100
-#define INTERVAL_RESET_WDT  500
+#define INTERVAL_RESET_WDT  200
 #define INTERVAL_ROTATE_DISPLAY  500
 #define INTERVAL_ROTATARY_SCHEDULE 10
 #define INTERVAL_IR_SEND 15*1000
 #define INTERVAL_WIFI_TEST 10*60*10000
 #define INTERVAL_WIFI_STRENG_SEND 30*1000
-#define INTERVAL_MQTT_CONNECT_TEST 3*60*1000
+#define INTERVAL_MQTT_CONNECT_TEST 5*1000
 #ifdef TIME_SIMULATOR
 #define INTERVAL_SCHEDULE 100
 #else
