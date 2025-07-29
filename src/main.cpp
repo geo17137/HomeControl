@@ -137,20 +137,10 @@
  * - Create printStrParam in class Param
  * 
  *  @version 2025.07.28
-<<<<<<< HEAD
-<<<<<<< HEAD
- * - reconnxion auto WiFi et Mqtt
-=======
-=======
->>>>>>> master
  * - reconnexion auto WiFi et Mqtt
  * 
  *  @version 2025.07.29
- * - Suppress serial message on wifi mqtt brocker reconnect
-<<<<<<< HEAD
->>>>>>> master
-=======
->>>>>>> master
+ * - Suppress serial message on reconnect
  */
 
 #include "main.h"
@@ -640,15 +630,7 @@ boolean initWifiStation(boolean flagDisplay) {
  * @return true si la connexion est établie, false sinon.
  */
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-boolean initMQTTClient() {
-=======
 boolean initMQTTClient(boolean flagDisplay) {
->>>>>>> master
-=======
-boolean initMQTTClient(boolean flagDisplay) {
->>>>>>> master
   int essai = 0;
   // Connecting to MQTT server
   mqttClient.setServer(mqttServer, mqttPort);
@@ -671,17 +653,8 @@ boolean initMQTTClient(boolean flagDisplay) {
     }
   }
   if (!mqttConnect) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    Serial.println("Failed to connect to MQTT broker");
-=======
     if (flagDisplay) 
       Serial.println("Failed to connect to MQTT broker");
->>>>>>> master
-=======
-    if (flagDisplay) 
-      Serial.println("Failed to connect to MQTT broker");
->>>>>>> master
     return false;
   }
   // Déclare Pub/Sub topics
@@ -773,15 +746,7 @@ void setup() {
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
   wifiConnected = initWifiStation(true);
   if (wifiConnected) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    initMQTTClient();
-=======
     initMQTTClient(true);
->>>>>>> master
-=======
-    initMQTTClient(true);
->>>>>>> master
     //long rssi = WiFi.RSSI();
     sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
   }
@@ -1537,15 +1502,7 @@ void loop() {
       millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     mqttConnectTest = millis();
     if (initWifiStation(false)) 
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if (initMQTTClient()) 
-=======
       if (initMQTTClient(false)) 
->>>>>>> master
-=======
-      if (initMQTTClient(false)) 
->>>>>>> master
         lcdPrintChar('c', 2, 0);
       else
         lcdPrintChar('n', 2, 0);
