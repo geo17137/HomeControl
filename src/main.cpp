@@ -373,10 +373,10 @@ FileLittleFS* initLogs(boolean force) {
  *  avec les paramètres d'heure d'été et met à jour l'horloge interne en fonction
  *  des données obtenues.
  */
-void initTime() {
+void initTime(boolean wifiConnected) {
   static long gmtOffset_sec = 0, daylightOffset_sec;
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
-  if (wifiConnected && mqttConnect) {
+  if (wifiConnected) {
     configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
     struct tm timeinfo;
     if (getLocalTime(&timeinfo)) {
@@ -534,48 +534,11 @@ void initWifiStation() {
     Serial.println("Connexion établie");
   WiFi.enableAP(false);
   WiFi.setHostname(HOSTNAME);
-  // WiFi.setAutoReconnect(true);
-  // WiFi.persistent(true);
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
   initOTA();
-
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-
-  // Code source exemple wifi manager
-  // WiFiManager, Local intialization. Once its business is done, there is no need to keep it aroun
-  //* WiFiManager wm;
-  // bool res;
-  // WiFi.mode(WIFI_MODE_NULL);
-  // WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  //* WiFi.mode(WIFI_STA);
-  // explicitly set mode, esp defaults to STA+AP
-  // reset settings - wipe stored credentials for testing
-  // these are stored by the esp library
-  // wm.resetSettings();
-
-  // Automatically connect using saved credentials,
-  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
-  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
-  // then goes into a blocking loop awaiting configuration and will return success result
-
-  // res = wm.autoConnect(); // auto generated AP name from chipid
-  // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-  //* res = wm.autoConnect(ssidAp, password); // password protected ap
-  //* wm.setHostname(HOSTNAME);
-
-  //* if (!res) {
-  // Serial.println("Failed to connect");
-  // ESP.restart();
-  //* }
-
-  // WiFi.setHostname(HOSTNAME);
-  // WiFi.setAutoReconnect(true);
-  // WiFi.persistent(true);
-  // ArduinoOTA.begin();
-  // Serial.begin(115200);
-  // Serial.print("IP address: ");
-  // Serial.println(WiFi.localIP());
-  // WiFi.enableAP(false);
 }
 #else
 /**
@@ -583,37 +546,34 @@ void initWifiStation() {
  * @return true si la connexion est établie, false sinon.
  */
 boolean initWifiStation(boolean flagDisplay) {
-  char buffer[21];
+  char buffer[32];
+  int i;
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    if (flagDisplay)  
-      Serial.printf("Wifi %s not connected! ...\n", ssid);
 #ifndef IO_DEBUG    
-    // backLightOff();
+//  backLightOff();
 #endif
-    if (flagDisplay)    
+    if (flagDisplay) {
+      Serial.printf("Wifi %s not connected! ...\n", ssid);
       lcdPrintString("WiFi not connected", 1, 0, true);
-    return false;
+    }
+    if (++i > 3)
+      return false;
   }
   WiFiClass::setHostname(hostname);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   initOTA();
-
   if (flagDisplay) {
     sprintf(buffer, "SSID : %s", WiFi.SSID().c_str());
     lcdPrintString(buffer, 1, 0, true);
-  } 
-
-  Serial.println(buffer);
-  sprintf(buffer, "IP : %s", WiFi.localIP().toString().c_str());
-  Serial.println(buffer);
-#ifndef IO_DEBUG
-  if (flagDisplay)    
+    Serial.println(buffer);
+    sprintf(buffer, "IP : %s", WiFi.localIP().toString().c_str());
+    Serial.println(buffer);
     lcdPrintString(buffer, 2, 0, true);
-#endif 
+  }
   return true;
 }
 #endif
@@ -631,32 +591,24 @@ boolean initWifiStation(boolean flagDisplay) {
  */
 
 boolean initMQTTClient(boolean flagDisplay) {
-  int essai = 0;
+  int i = 0;
   // Connecting to MQTT server
   mqttClient.setServer(mqttServer, mqttPort);
   // Fixé dans PubSubClient.h
   ///mqttClient.setBufferSize(MQTT_MAX_BUFFER_SIZE);
   mqttClient.setCallback(PubSubCallback);
-  mqttConnect = false;
-  while (!mqttClient.connected() && essai < 3) {
-    essai++;
-    // Serial.println(String("Connecting to MQTT (") + mqttServer + ")...");
-    // Pour un même courtier les clients doivent avoir un id différent
-    String clientId = "ESP32Client-";
-    clientId += String(random(0xffff), HEX);
-    // Serial.println(clientId);
-    if (mqttClient.connect(clientId.c_str(), mqttUser, mqttPassword)) {
-      if (flagDisplay) 
-        Serial.println("MQTT client connected");
-      mqttConnect = true;
-      break;
+  // Pour un même courtier les clients doivent avoir un id différent
+  String clientId = "ESP32Client-";
+  clientId += String(random(0xffff), HEX);
+  while (!mqttClient.connect(clientId.c_str(), mqttUser, mqttPassword)) {
+    if (++i > 3) {
+      if (flagDisplay)
+        Serial.println("Failed to connect to MQTT broker");
+      return false;
     }
   }
-  if (!mqttConnect) {
-    if (flagDisplay) 
-      Serial.println("Failed to connect to MQTT broker");
-    return false;
-  }
+  if (flagDisplay)
+    Serial.println("MQTT client connected");
   // Déclare Pub/Sub topics
   mqttClient.subscribe(TOPIC_GET_PARAM);
   mqttClient.subscribe(TOPIC_WRITE_PARAM);
@@ -746,12 +698,11 @@ void setup() {
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
   wifiConnected = initWifiStation(true);
   if (wifiConnected) {
-    initMQTTClient(true);
-    //long rssi = WiFi.RSSI();
+    mqttConnect = initMQTTClient(true);
     sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
   }
 
-  initTime();
+  initTime(wifiConnected);
   initRotary();
   lcdPrintString(getDate(), 3, 0, true);
   Serial.println(getDate());
@@ -1453,8 +1404,7 @@ void loop() {
   static ulong tpsWifiTest = 0;
   static ulong tpsWDTReset = 0;
   static ulong tpsWifiSignalStreng = INTERVAL_WIFI_STRENG_SEND;
-  static unsigned wifiTest = 0;
-  static unsigned mqttConnectTest=0;
+   static unsigned mqttConnectTest=0;
   static boolean esp_task_wdt = true;
   static unsigned rotate;
 
@@ -1478,6 +1428,7 @@ void loop() {
 #endif
 
   // Test wifi et reconnexion si nécessaire
+  //static unsigned wifiTest = 0;
   // if (tpsWifiTest > INTERVAL_WIFI_TEST) {
   //   int i = 0;
   //   tpsWifiTest = millis();
@@ -1502,7 +1453,7 @@ void loop() {
       millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     mqttConnectTest = millis();
     if (initWifiStation(false)) 
-      if (initMQTTClient(false)) 
+      if (mqttConnect = initMQTTClient(false))
         lcdPrintChar('c', 2, 0);
       else
         lcdPrintChar('n', 2, 0);
@@ -1619,19 +1570,19 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   String strPayload = "";
   // Préserver le payload dans un buffer, utile que si on se réutilise payload
   // dans une commande MQTT
+  // char buffer[80];
   // static char bufferPayload[512];
   // memcpy(bufferPayload, payload, length + 4);
-#ifdef DEBUG_OUTPUT
-  char buffer[80];
-#endif
+
   for (unsigned int i = 0; i < length; i++) {
     strPayload += static_cast<char>(payload[i]);
   }
-// #ifdef DEBUG_OUTPUT_
+
+#ifdef DEBUG_TOPIC
   Serial.print(topic);
   Serial.print(" : ");
   Serial.println(strPayload.c_str());
-// #endif
+#endif
 
   //------------------  TOPIC_GET_PARAM ----------------------
   if (cmp(topic, TOPIC_GET_PARAM)) {
@@ -1783,11 +1734,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       offVanneEst();
     }
     return;
-#ifdef DEBUG_OUTPUT
-    sprintf(buffer, "topic : %s, port %s\n", topic, bufferPayload.c_str());
-    print(buffer, OUTPUT_PRINT);
-#endif
-    // cmdVanneEst = cmp(bufferPayload.c_str(), "1");
+
+    // sprintf(buffer, "topic : %s, port %s\n", topic, bufferPayload.c_str());
+    // print(buffer, OUTPUT_PRINT);
+
+    // cmdVanneEst = cmp(strPayload.c_str(), "1");
     return;
   }
   //------------------  TOPIC_CMD_PAC ----------------------

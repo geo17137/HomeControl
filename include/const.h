@@ -2,7 +2,7 @@
 #define CONST_H
 
 //#define IO_TEST
-// #define PRODUCT_DEVICE
+#define PRODUCT_DEVICE
 #define ES32A08
 #define ENABLE_WATCHDOG
 #ifdef  PRODUCT_DEVICE
@@ -33,6 +33,7 @@
 // #define TIME_SIMULATOR
 // #define WEB_SERIAL
 // #define DEBUG_HEAP
+// #define DEBUG_TOPIC
 //------------------------
 
 #define FORCE_INIT_PARAM false  
