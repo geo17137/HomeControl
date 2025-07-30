@@ -282,7 +282,10 @@ void nullFunc() {
 // Valeur affichée sur la première ligne lcd
 char* readPortIo_O() {
   static char str[25];
-  strcpy(str, n1gpioRead(O_VMC));
+  if (!vmcFast)
+    strcpy(str, n1gpioRead(O_VMC));
+  else
+    strcpy(str, "2");  
   strcat(str, ngpioRead(O_PAC));
   strcat(str, ngpioRead(O_FOUR));
   strcat(str, ngpioRead(O_POMPE));
@@ -299,7 +302,7 @@ char* readPortIo_O() {
  */
 unsigned testPortIO_O() {
   return 
-  ugpioRead(O_VMC) + 
+  (vmcFast) ? 2 :  ugpioRead(O_VMC) + 
   (ugpioRead(O_PAC) << 1) + 
   (ugpioRead(O_FOUR) << 2) + 
   (ugpioRead(O_POMPE) << 3) +

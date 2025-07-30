@@ -177,6 +177,7 @@ extern SimpleParam* cDlyParam;
 extern SimpleParam* cGlobalScheduledParam;
 extern SimpleParam* cPersistantParam;
 extern boolean irSendPacOff;
+extern boolean vmcFast;
 
 extern void (*display)();
 extern void (*onSingleClick)();
