@@ -285,7 +285,7 @@ char* readPortIo_O() {
   if (!vmcFast)
     strcpy(str, n1gpioRead(O_VMC));
   else
-    strcpy(str, "2");  
+    strcpy(str, "2");  // mode fast
   strcat(str, ngpioRead(O_PAC));
   strcat(str, ngpioRead(O_FOUR));
   strcat(str, ngpioRead(O_POMPE));

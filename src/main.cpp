@@ -696,10 +696,10 @@ void setup() {
   fileDlyParam = initDlyParam(FORCE_INIT_DLY_PARAM);
   fileGlobalScheduledParam = initGlobalScheduledParam(FORCE_GLOBAL_SCHEDULED_PARAM);
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
-  wifiConnected = initWifiStation(true);
-  if (wifiConnected) {
-    mqttConnect = initMQTTClient(true);
+  
+  if (wifiConnected = initWifiStation(true)) {
     sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
+    mqttConnect = initMQTTClient(true);
   }
 
   initTime(wifiConnected);
@@ -1010,7 +1010,7 @@ void offVanneEst() {
 /**
  * @brief Exécuté toutes les minutes
  *        Exécute les actions temporelles programmées dans param
- * Appelé par loop (on ne peut pas utiliser les timers RTOS (schedule accès aux fichiers))
+ * Appelé par loop (on ne peut pas utiliser les timers RTOS (schedule accède aux fichiers))
  */
 void schedule() {
   static boolean vmcBoardOn = false;
@@ -1138,7 +1138,7 @@ void schedule() {
 #endif
           onVmc = 1;
           if (item.enable == 2)
-            onVmc = 2;
+            onVmc = 2; // marche rapide
           switch (vmcMode) {
           case VMC_STOP:
           case VMC_ON_FAST:
@@ -1149,6 +1149,7 @@ void schedule() {
             if (onVmc == 2) {
               vmcFast = true;
               vmcMode = VMC_PROG_ON_FAST;
+              // Démarrage carte VMC marche rapide
               t_start(tache_t_cmdVmcBoard);
             }
             break;
