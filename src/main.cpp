@@ -739,6 +739,8 @@ void setup() {
   tache_t_monoPacOn = t_cree(monoPacOn, cvrtic(DLY_PAC_ON) * 1000);
   // Monostable delai avant envoi d'une commande mqtt vers la carte VMC déportée 
   tache_t_cmdVmcBoard = t_cree(monoCmdVmcBoard, cvrtic(DLY_VMC_BOARD_ON) * 1000);
+  // Monostable delai avant envoi d'une commande mqtt vers la carte VMC déportée 
+  tache_t_cmdVmcBoardOff = t_cree(monoCmdVmcBoardOff, cvrtic(DLY_VMC_BOARD_ON_OFF) * 1000);
   // Monostable durée affichage LCD local après modification d'une E/S
   tache_t_backLight = t_cree(monoCmdBackLight, cvrtic(DLY_BACK_LIGHT) * 1000);
   // Monostable durée d'affichage local si porte armoire éléctrique est restée ouverte 
@@ -819,9 +821,17 @@ void monoCmdVmcBoard(TimerHandle_t xTimer) {
 #endif
   // t_stop(tache_t_cmdVmcBoard);
   // Envoi de la commande vers la carte déportée
-  if (vmcFast) 
-    mqttClient.publish(VMC_BOARD_ACTION, S_ON);
-  else
+  mqttClient.publish(VMC_BOARD_ACTION, S_ON);
+  if (!vmcFast)
+    t_start(tache_t_cmdVmcBoardOff);  
+}
+
+void monoCmdVmcBoardOff(TimerHandle_t xTimer) {
+#ifdef DEBUG_OUTPUT
+  print("Stop board\n", OUTPUT_PRINT);
+#endif
+  // Envoi de la commande vers la carte déportée
+  if (!vmcFast)
     mqttClient.publish(VMC_BOARD_ACTION, S_OFF);
 }
 
@@ -1145,12 +1155,13 @@ void schedule() {
           case VMC_ON: break;
           default:
             on(O_VMC);
+            t_start(tache_t_cmdVmcBoard);
             vmcMode = VMC_PROG_ON;
             if (onVmc == 2) {
               vmcFast = true;
               vmcMode = VMC_PROG_ON_FAST;
               // Démarrage carte VMC marche rapide
-              t_start(tache_t_cmdVmcBoard);
+              // t_start(tache_t_cmdVmcBoard);
             }
             break;
           }
@@ -1355,13 +1366,14 @@ void setVmc(int cmd) {
       vmcMode = VMC_PROG_OFF;
       break;
     case 1:
-      // VMV marche lente
+      // VMC marche lente
       on(O_VMC);
+      t_start(tache_t_cmdVmcBoard);      
       vmcFast = false;
       vmcMode = VMC_PROG_ON;
       break;
     case 2:
-      // VMV marche rapide
+      // VMC marche rapide
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);
       vmcFast = true;
@@ -1380,9 +1392,9 @@ void setVmc(int cmd) {
   case CMD_VMC_ON:
     // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
+    t_start(tache_t_cmdVmcBoard);
     vmcFast = false;
     vmcMode = VMC_ON;
-    t_start(tache_t_cmdVmcBoard);
     break;
   default: ;
   }

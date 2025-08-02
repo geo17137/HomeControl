@@ -20,7 +20,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
-const char* version = "2025.07.31";
+const char* version = "2025.08.02";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -249,6 +249,7 @@ TACHE_T tache_t_tankFilling;
 TACHE_T tache_t_surpressorFilling;
 TACHE_T tache_t_cmdEvEst;
 TACHE_T tache_t_cmdVmcBoard;
+TACHE_T tache_t_cmdVmcBoardOff;
 TACHE_T tache_t_backLight;
 TACHE_T tache_t_backLight2;
 TACHE_T tache_t_encoderTask;
@@ -265,6 +266,7 @@ void monoTankFilling(TimerHandle_t xTimer);
 void monoSurpressorFilling(TimerHandle_t xTimer);
 void monoCmdEvEst(TimerHandle_t xTimer);
 void monoCmdVmcBoard(TimerHandle_t xTimer);
+void monoCmdVmcBoardOff(TimerHandle_t xTimer);
 void monoCmdBackLight(TimerHandle_t xTimer);
 void monoCmdBackLight2(TimerHandle_t xTimer);
 void monoDefaultDisplay(TimerHandle_t xTimer);
