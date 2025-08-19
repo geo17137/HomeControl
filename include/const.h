@@ -36,7 +36,7 @@
 // #define DEBUG_TOPIC
 //------------------------
 
-#define FORCE_INIT_PARAM false 
+#define FORCE_INIT_PARAM false  
 #define FORCE_INIT_DLY_PARAM false 
 #define FORCE_GLOBAL_SCHEDULED_PARAM false
 #define FORCE_PERSISTANT_PARAM false
@@ -345,12 +345,12 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 
 // Contenu du fichier FILE_PERSISTANT_DEVICE (par défaut)
 // Utilise les mêmes indices que DEFAUT_GLOBAL_SCHEDULED_PARAM 
-#define PERSISTANT "0:0:0:0:0"
+#define PERSISTANT "0:0:0:1:0"
 #define N_PERSISTANT_PARAM MAX_ITEMS_GLOBAL_SCHEDULED_PARAM
 
 // Paramétrage des éléments persistants après reboot
 // La persistance n'est mis en oeuvre que pour les cycles programmés
-// sauf pour la VMC et l'electroménager cuisine
+// sauf pour la VMC
 // Définir ces éléments pour les rendre persistant
 // après reboot (recoompilation obligatoire)
 #define PERSISTANT_POWER_COOK 
