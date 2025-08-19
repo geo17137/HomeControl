@@ -54,13 +54,15 @@
 #endif
 
 // #define  CONFIG_ARDUINO_LOOP_STACK_SIZE 2*8192
-
+//-------------- Délais monostables ------------------------------
 // Delay de mise hors tension PAC (s)
 #define DLY_PAC_OFF 5 * 60
 // Retard envoi commande carte IR après mise sous tension PAC (s)
 #define DLY_PAC_ON  20
 // Retard commande carte deportée fast vmc après mise sa mise sous tension (s)
 #define DLY_VMC_BOARD_ON 10
+// Retard commande carte deportée vmc lent après mise sa mise sous tension (s)
+#define DLY_VMC_BOARD_ON_OFF 60
 // Délai COUPURE ECLAIRAGE LCD (s)
 #define DLY_BACK_LIGHT 10
 // Délai COUPURE ECLAIRAGE LCD panneau electrique ouvert (s)
@@ -119,6 +121,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define CMD_VMC_PROG      1
 #define CMD_VMC_ON_FAST   2
 #define CMD_VMC_ON        3
+
 
 //-----------------------
 //    Sorties relais
@@ -255,7 +258,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_STATUS_CUISINE TOPIC_PREFIX  "homecontrol/cuisine_status"
 #define TOPIC_STATUS_VMC                   "homecontrol/vmc_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
-#define SUB_GPIO0_ACTION                   "circuit2/action"
+#define SUB_GPIO0_ACTION     TOPIC_PREFIX  "circuit2/action"
 
 //-------------Publications pour l'appli MitsubishiPAC_IR--------------------
 #define TOPIC_PAC_IR_PARAM_APPLY TOPIC_PREFIX "mitsubishi/param/apply"
@@ -263,7 +266,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_PAC_IR_OFF         TOPIC_PREFIX "mitsubishi/param/off"
 
 //-------------Publications pour l'appli VmcCmd (carte déportée command marche rapide vmc)
-#define VMC_BOARD_ACTION TOPIC_PREFIX TOPIC_PREFIX "vmc_board/action"
+#define VMC_BOARD_ACTION  TOPIC_PREFIX "vmc_board/action"
 
 // Time out watch dog (ms)
 #define WDT_TIMEOUT 100
