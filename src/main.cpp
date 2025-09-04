@@ -148,6 +148,10 @@
  *   EspalexaDevice::EspalexaDevice(String deviceName, BrightnessCallbackFunction gnCallback, uint8_t initialValue) { //constructor for dimmable device
  *  _type = EspalexaDeviceType::onoff;
  * 
+ *  - Mettre en commantire la ligne 638 du fichier 
+ *    C:\Users\xxx\.platformio\packages\framework-arduinoespressif32\libraries\WebServer\src\WebServer.cpp
+ *    (fonction void WebServer::_handleRequest()) 
+ *    // log_e("request handler not found");
  */
 
 #include "main.h"
