@@ -144,6 +144,10 @@
  * 
  *  @version 2025.09.04
  * - Ajout commande alexa pour les appareils electro ménager
+ *   Modifier dans la librairie Estalexa.cpp fonction
+ *   EspalexaDevice::EspalexaDevice(String deviceName, BrightnessCallbackFunction gnCallback, uint8_t initialValue) { //constructor for dimmable device
+ *  _type = EspalexaDeviceType::onoff;
+ * 
  */
 
 #include "main.h"
