@@ -141,6 +141,9 @@
  * 
  *  @version 2025.07.29
  * - Suppress serial message on reconnect
+ * 
+ *  @version 2025.09.04
+ * - Ajout commande alexa pour les appareils electro ménager
  */
 
 #include "main.h"
@@ -252,6 +255,26 @@ const char* bootRaison() {
     return "";
   }
 }
+
+#ifdef ALEXA
+void powerControl(uint8_t cmd) {
+  //  Serial.println(cmd);
+   if (cmd==255) {
+      on(O_FOUR);
+      mqttClient.publish(TOPIC_STATUS_CUISINE, "on");      
+    }
+    else  if (cmd==0){
+      off(O_FOUR);
+      mqttClient.publish(TOPIC_STATUS_CUISINE, "off");   
+    }
+}
+
+void addDevices(){
+  // Define your devices here.
+  espalexa.addDevice("Four", powerControl);
+  espalexa.begin();
+}
+#endif
 
 /**
  * @brief Récupère les paramètres des actions programmées et mémorisés 
@@ -802,6 +825,10 @@ void setup() {
 // Serial.println(uxTaskGetStackHighWaterMark(NULL));
 // _ioDisplay();
 // cDlyParam->print();
+#ifdef ALEXA
+  addDevices();
+  Serial.println("Alexa command");
+#endif  
   Serial.println("End setup");
 }
 
@@ -1430,7 +1457,9 @@ void loop() {
   return;
 #endif    
   mqttClient.loop();
-  
+#ifdef ALEXA  
+  espalexa.loop();
+#endif  
 #ifdef ENABLE_WATCHDOG
   // Reset du chien de garde
   if (millis() - tpsWDTReset > INTERVAL_RESET_WDT) {

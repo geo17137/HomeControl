@@ -20,7 +20,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
-const char* version = "2025.08.19";
+const char* version = "2025.09.04";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -41,6 +41,9 @@ const char* version = "2025.08.19";
 #include <ESP32Time.h>
 #include <esp_task_wdt.h>
 #include <LiquidCrystal_I2C.h>
+#ifdef ALEXA
+#include <Espalexa.h>
+#endif
 #include "display.h"
 #include "mtr86.h"
 #include "param.h"
@@ -63,7 +66,9 @@ const char *hostname = HOSTNAME;
 
 // WiFi client instance
 WiFiClient wifiClient;
-
+#ifdef ALEXA
+Espalexa espalexa;
+#endif
 #ifdef TIME_SIMULATOR
 static int h;
 static int m;

@@ -4,6 +4,7 @@
 //#define IO_TEST
 #define PRODUCT_DEVICE
 #define ES32A08
+#define ALEXA
 #define ENABLE_WATCHDOG
 #ifdef  PRODUCT_DEVICE
 #define TOPIC_PREFIX ""
