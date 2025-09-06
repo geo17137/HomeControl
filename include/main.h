@@ -20,7 +20,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
-const char* version = "2025.09.04";
+const char* version = "2025.09.06";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -42,7 +42,7 @@ const char* version = "2025.09.04";
 #include <esp_task_wdt.h>
 #include <LiquidCrystal_I2C.h>
 #ifdef ALEXA
-#include <Espalexa.h>
+#include "fauxmoESP.h"
 #endif
 #include "display.h"
 #include "mtr86.h"
@@ -67,7 +67,7 @@ const char *hostname = HOSTNAME;
 // WiFi client instance
 WiFiClient wifiClient;
 #ifdef ALEXA
-Espalexa espalexa;
+
 #endif
 #ifdef TIME_SIMULATOR
 static int h;
@@ -216,7 +216,9 @@ Param* cParam;
 SimpleParam* cDlyParam;
 SimpleParam* cGlobalScheduledParam;
 SimpleParam* cPersistantParam;
-
+#ifdef ALEXA
+fauxmoESP fauxmo;
+#endif
 // Pre-declared function prototypes
 void PubSubCallback(char* topic, byte* payload, unsigned int length);
 void writeLogs(const char * msg);
@@ -245,6 +247,8 @@ extern unsigned testPortIO_O();
 extern unsigned testPortIO_I();
 extern void ioDisplay();
 extern void initDisplay();
+extern void addDevices();
+extern void initAlexa();
 
 // RTOS task IDs (monostable) format Mtr86
 TACHE_T tache_t_monoPacOff;
