@@ -146,12 +146,19 @@
  * - Ajout commande alexa pour les appareils electro ménager
  *   Modifier dans la librairie Estalexa.cpp fonction
  *   EspalexaDevice::EspalexaDevice(String deviceName, BrightnessCallbackFunction gnCallback, uint8_t initialValue) { //constructor for dimmable device
- *  _type = EspalexaDeviceType::onoff;
+ *   _type = EspalexaDeviceType::onoff;
  * 
- *  - Mettre en commantire la ligne 638 du fichier 
+ *  - Mettre en commentaire la ligne 638 du fichier 
  *    C:\Users\xxx\.platformio\packages\framework-arduinoespressif32\libraries\WebServer\src\WebServer.cpp
  *    (fonction void WebServer::_handleRequest()) 
  *    // log_e("request handler not found");
+ *
+ *  @version 2025.09.06
+ * - Ajout commande alexa pour les appareils electro ménager librairie	vintlabs/FauxmoESP @ ^3.4.1
+ *   Supression librairie esphome/AsyncTCP-esphome @ ^2.0.0 remplacement par esp32async/AsyncTCP@^3.4.7
+ *   Ajout des devices Alexa: Vmc, Fats Vmc, Vmc Prog, Arrosage
+ *   Rétablisement à l'original de void WebServer::_handleRequest()) dans
+ *   C:\Users\xxx\.platformio\packages\framework-arduinoespressif32\libraries\WebServer\src\WebServer.cpp
  */
 
 #include "main.h"
@@ -223,6 +230,17 @@ void printMqttDebugValue(const char* value) {
   mqttClient.publish(TOPIC_DEBUG_VALUE, value);
 }
 
+// void publish(const char* topic, const char* payload) {
+//   mqttClient.publish(topic, payload);
+// }
+
+// void gpioOff(int adr) {
+//   off(adr);
+// }
+// void gpioOn(int adr) {
+//   on(adr);
+// }
+
 const char* bootRaison() {
   esp_reset_reason_t reason = esp_reset_reason();
   switch (reason) {
@@ -263,26 +281,6 @@ const char* bootRaison() {
     return "";
   }
 }
-
-#ifdef ALEXA
-void powerControl(uint8_t cmd) {
-  //  Serial.println(cmd);
-   if (cmd==255) {
-      on(O_FOUR);
-      mqttClient.publish(TOPIC_STATUS_CUISINE, "on");      
-    }
-    else  if (cmd==0){
-      off(O_FOUR);
-      mqttClient.publish(TOPIC_STATUS_CUISINE, "off");   
-    }
-}
-
-void addDevices(){
-  // Define your devices here.
-  espalexa.addDevice("Four", powerControl);
-  espalexa.begin();
-}
-#endif
 
 /**
  * @brief Récupère les paramètres des actions programmées et mémorisés 
@@ -834,6 +832,7 @@ void setup() {
 // _ioDisplay();
 // cDlyParam->print();
 #ifdef ALEXA
+  initAlexa();
   addDevices();
   Serial.println("Alexa command");
 #endif  
@@ -1427,9 +1426,9 @@ void setVmc(int cmd) {
   case CMD_VMC_ON:
     // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
-    t_start(tache_t_cmdVmcBoard);
     vmcFast = false;
     vmcMode = VMC_ON;
+    t_start(tache_t_cmdVmcBoard);
     break;
   default: ;
   }
@@ -1466,7 +1465,7 @@ void loop() {
 #endif    
   mqttClient.loop();
 #ifdef ALEXA  
-  espalexa.loop();
+  fauxmo.handle();
 #endif  
 #ifdef ENABLE_WATCHDOG
   // Reset du chien de garde
