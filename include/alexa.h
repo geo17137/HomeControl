@@ -19,7 +19,9 @@ extern void startWatering(int timeout);
 extern void stopWatering();
 extern unsigned int wateringNoTimeOut;
 
-boolean state;
+boolean _state;
+unsigned char _value;
+
 #define S_CUISINE "Four"
 #define S_LOW_VMC "Vmc"
 #define S_FAST_VMC "Fast Vmc"

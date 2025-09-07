@@ -15,7 +15,7 @@ void initAlexa() {
 }
 
 void cuisine() {
-  if (state) {
+  if (_state) {
     on(O_FOUR);
     mqttClient.publish(TOPIC_STATUS_CUISINE, "on");
     return;
@@ -25,7 +25,7 @@ void cuisine() {
 }
 
 void lowVmc() {
-  if (state) {
+  if (_state) {
     setVmc(3);
     return;
   }
@@ -33,7 +33,7 @@ void lowVmc() {
 }
 
 void fastVmc() {
-  if (state) {
+  if (_state) {
     setVmc(2);
     return;
   }
@@ -41,7 +41,7 @@ void fastVmc() {
 }
 
 void vmcProg() {
-  if (state) {
+  if (_state) {
     setVmc(1);
     return;
   }
@@ -49,7 +49,7 @@ void vmcProg() {
 }
 
 void arrosage() {
-  if (state) {
+  if (_state) {
     startWatering(TIMEOUT);
     wateringNoTimeOut = 0;
     return;
@@ -65,7 +65,7 @@ void addDevices() {
   fauxmo.addDevice(S_VMC_PROG);
   fauxmo.addDevice(S_LANCE_ARROSAGE);
 
-  fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool p_state, unsigned char value) {
+  fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {
       
   // Rappel lorsqu'une commande Alexa est reçue.
   // Vous pouvez utiliser device_id ou device_name pour choisir l'élément sur lequel effectuer une action (relais, LED, etc.).
@@ -77,58 +77,11 @@ void addDevices() {
   // La vérification de l'identifiant de l'appareil est plus simple si vous êtes certain de l'ordre dans lequel ils sont chargés et qu'il ne change pas.
   // Sinon, la comparaison du nom de l'appareil est plus sûre.
 
-    state = p_state;
+    _state = state;
+    _value = value;
     // Par prudence on vérifie l'indice
     if (device_id < size)
       funcToCall[device_id]();
-
-    // switch (device_id) {
-    // case cuisine:
-    //   if (state) {
-    //     on(O_FOUR);
-    //     mqttClient.publish(TOPIC_STATUS_CUISINE, "on");
-    //   }
-    //   else {
-    //     off(O_FOUR);
-    //     mqttClient.publish(TOPIC_STATUS_CUISINE, "off");
-    //   }
-    //   break;
-    // case low_vmc:
-    //   if (state) {
-    //     setVmc(3);
-    //   }
-    //   else {
-    //     setVmc(0);
-    //   }
-    //   break;
-    // case fast_vmc:
-    //   if (state) {
-    //     setVmc(2);
-    //   }
-    //   else {
-    //     setVmc(0);
-    //   }
-    //   break;
-    // case prog_vmc:
-    //   if (state) {
-    //     setVmc(1);
-    //   }
-    //   else {
-    //     setVmc(0);
-    //   }
-    //   break;
-    // case lance_arrosage:
-    //   if (state) {
-    //     startWatering(TIMEOUT);
-    //   }
-    //   else {
-    //     stopWatering();
-    //   }
-    //   wateringNoTimeOut = 0;
-    //   break;
-    // default:
-    //   break;
-    // }
   });
 }
 #endif
