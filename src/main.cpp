@@ -154,11 +154,14 @@
  *    // log_e("request handler not found");
  *
  *  @version 2025.09.06
- * - Ajout commande alexa pour les appareils electro ménager librairie	vintlabs/FauxmoESP @ ^3.4.1
+ *  - Ajout commande alexa pour les appareils electro ménager librairie	vintlabs/FauxmoESP @ ^3.4.1
  *   Supression librairie esphome/AsyncTCP-esphome @ ^2.0.0 remplacement par esp32async/AsyncTCP@^3.4.7
  *   Ajout des devices Alexa: Vmc, Fats Vmc, Vmc Prog, Arrosage
  *   Rétablisement à l'original de void WebServer::_handleRequest()) dans
  *   C:\Users\xxx\.platformio\packages\framework-arduinoespressif32\libraries\WebServer\src\WebServer.cpp
+ *
+ *  @version 2025.09.07
+ *  - Optimisation des appels aux fonction Alexa
  */
 
 #include "main.h"

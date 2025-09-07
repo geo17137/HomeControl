@@ -14,14 +14,58 @@ void initAlexa() {
   fauxmo.enable(true);
 }
 
-void addDevices(){
-  fauxmo.addDevice(CUISINE);
-  fauxmo.addDevice(LOW_VMC);
-  fauxmo.addDevice(FAST_VMC);
-  fauxmo.addDevice(PROG_VMC);
-  fauxmo.addDevice(LANCE_ARROSAGE);
+void cuisine() {
+  if (state) {
+    on(O_FOUR);
+    mqttClient.publish(TOPIC_STATUS_CUISINE, "on");
+    return;
+  }
+  off(O_FOUR);
+  mqttClient.publish(TOPIC_STATUS_CUISINE, "off");
+}
 
-  fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {
+void lowVmc() {
+  if (state) {
+    setVmc(3);
+    return;
+  }
+  setVmc(0);
+}
+
+void fastVmc() {
+  if (state) {
+    setVmc(2);
+    return;
+  }
+  setVmc(0);
+}
+
+void vmcProg() {
+  if (state) {
+    setVmc(1);
+    return;
+  }
+  setVmc(0);
+}
+
+void arrosage() {
+  if (state) {
+    startWatering(TIMEOUT);
+    wateringNoTimeOut = 0;
+    return;
+  }
+  stopWatering();
+}
+
+void addDevices() {
+  // Ne pas modifier l'ordre
+  fauxmo.addDevice(S_CUISINE);
+  fauxmo.addDevice(S_LOW_VMC);
+  fauxmo.addDevice(S_FAST_VMC);
+  fauxmo.addDevice(S_VMC_PROG);
+  fauxmo.addDevice(S_LANCE_ARROSAGE);
+
+  fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool p_state, unsigned char value) {
       
   // Rappel lorsqu'une commande Alexa est reçue.
   // Vous pouvez utiliser device_id ou device_name pour choisir l'élément sur lequel effectuer une action (relais, LED, etc.).
@@ -32,59 +76,59 @@ void addDevices(){
   // Serial.printf("[MAIN] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
   // La vérification de l'identifiant de l'appareil est plus simple si vous êtes certain de l'ordre dans lequel ils sont chargés et qu'il ne change pas.
   // Sinon, la comparaison du nom de l'appareil est plus sûre.
-    if (strcmp(device_name, CUISINE)==0) {
-      if (state) {
-        // Serial.printf("[VMC] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);      
-        on(O_FOUR);
-        mqttClient.publish(TOPIC_STATUS_CUISINE, "on");
-      }
-      else {
-        // Serial.printf("[VMC] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);      
-        off(O_FOUR);
-        mqttClient.publish(TOPIC_STATUS_CUISINE, "off");   
-      }
-    } 
-    else if (strcmp(device_name, LOW_VMC)==0) {
-      if (state) {
-        // Serial.printf("[VMC] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        setVmc(3);
-      }
-      else {
-      //  Serial.printf("[VMC] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-       setVmc(0);
-      }    
-    } 
-    else if (strcmp(device_name, FAST_VMC)==0) {
-      if (state) {
-        // Serial.printf("[FAST] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        setVmc(2);
-      }
-      else {
-        // Serial.printf("[FAST] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        setVmc(0);
-      }      
-    } 
-    else if (strcmp(device_name, PROG_VMC)==0) {
-      if (state) {
-        // Serial.printf("[PROG] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        setVmc(1);
-      }
-      else {
-        // Serial.printf("[PROG] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        setVmc(0);
-      }      
-    } 
-    else if (strcmp(device_name, LANCE_ARROSAGE)==0) {
-      if (state) {
-        // Serial.printf("[LANCE_ARROSAGE] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        startWatering(TIMEOUT);
-      }
-      else {
-        // Serial.printf("[LANCE_ARROSAGE] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
-        stopWatering();
-      }      
-      wateringNoTimeOut = 0;
-    } 
+
+    state = p_state;
+    // Par prudence on vérifie l'indice
+    if (device_id < size)
+      funcToCall[device_id]();
+
+    // switch (device_id) {
+    // case cuisine:
+    //   if (state) {
+    //     on(O_FOUR);
+    //     mqttClient.publish(TOPIC_STATUS_CUISINE, "on");
+    //   }
+    //   else {
+    //     off(O_FOUR);
+    //     mqttClient.publish(TOPIC_STATUS_CUISINE, "off");
+    //   }
+    //   break;
+    // case low_vmc:
+    //   if (state) {
+    //     setVmc(3);
+    //   }
+    //   else {
+    //     setVmc(0);
+    //   }
+    //   break;
+    // case fast_vmc:
+    //   if (state) {
+    //     setVmc(2);
+    //   }
+    //   else {
+    //     setVmc(0);
+    //   }
+    //   break;
+    // case prog_vmc:
+    //   if (state) {
+    //     setVmc(1);
+    //   }
+    //   else {
+    //     setVmc(0);
+    //   }
+    //   break;
+    // case lance_arrosage:
+    //   if (state) {
+    //     startWatering(TIMEOUT);
+    //   }
+    //   else {
+    //     stopWatering();
+    //   }
+    //   wateringNoTimeOut = 0;
+    //   break;
+    // default:
+    //   break;
+    // }
   });
 }
 #endif
