@@ -23,23 +23,17 @@ boolean _state;
 unsigned char _value;
 
 #define S_CUISINE "Four"
-#define S_LOW_VMC "Vmc"
-#define S_FAST_VMC "Fast Vmc"
-#define S_VMC_PROG "Vmc prog"
+#define S_VMC "Vmc"
 #define S_LANCE_ARROSAGE "Arrosage"
 const unsigned CUISINE = 0;
-const unsigned LOW_VMC = 1;
-const unsigned FAST_VMC = 2;
-const unsigned VMC_PROG = 3;
-const unsigned LANCE_ARROSAGE = 4;
+const unsigned VMC_DEV = 1;
+const unsigned LANCE_ARROSAGE = 2;
 const unsigned size = LANCE_ARROSAGE + 1;
 
 void cuisine();
-void lowVmc();
-void fastVmc();
-void vmcProg();
+void vmc();
 void arrosage();
 
 typedef void (*FuncPtr)();
-static FuncPtr funcToCall[size] = {cuisine, lowVmc, fastVmc, vmcProg, arrosage};
+static FuncPtr funcToCall[size] = {cuisine, vmc, arrosage};
 #endif

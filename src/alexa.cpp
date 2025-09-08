@@ -24,26 +24,20 @@ void cuisine() {
   mqttClient.publish(TOPIC_STATUS_CUISINE, "off");
 }
 
-void lowVmc() {
+void vmc() {
   if (_state) {
-    setVmc(3);
-    return;
-  }
-  setVmc(0);
-}
-
-void fastVmc() {
-  if (_state) {
-    setVmc(2);
-    return;
-  }
-  setVmc(0);
-}
-
-void vmcProg() {
-  if (_state) {
-    setVmc(1);
-    return;
+    if (_value < 130 && _value > 100) {
+      setVmc(3);      
+      return;
+    }
+    if (_value > 240) {
+      setVmc(2);      
+      return;
+    }
+    if (_value < 100) {
+      setVmc(1);      
+      return;
+    }
   }
   setVmc(0);
 }
@@ -60,9 +54,7 @@ void arrosage() {
 void addDevices() {
   // Ne pas modifier l'ordre
   fauxmo.addDevice(S_CUISINE);
-  fauxmo.addDevice(S_LOW_VMC);
-  fauxmo.addDevice(S_FAST_VMC);
-  fauxmo.addDevice(S_VMC_PROG);
+  fauxmo.addDevice(S_VMC);
   fauxmo.addDevice(S_LANCE_ARROSAGE);
 
   fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {

@@ -162,6 +162,12 @@
  *
  *  @version 2025.09.07
  *  - Optimisation des appels aux fonction Alexa
+ *
+ *  @version 2025.09.10
+ *  - Fusion des commandes vmc : 
+ *     vmc 10%  -> vmc programmée
+ *     vmc 50%  -> vmc ventilation faible
+ *     vmc 100% -> vmc ventilation max 
  */
 
 #include "main.h"
