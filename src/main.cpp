@@ -1066,9 +1066,9 @@ void offVanneEst() {
  * Appelé par loop (on ne peut pas utiliser les timers RTOS (schedule accède aux fichiers))
  */
 void schedule() {
-  static boolean vmcBoardOn = false;
-  static boolean vmcFastR = false;
-  static boolean onVmcExec = false;
+  // static boolean vmcBoardOn = false;
+  // static boolean vmcFastR = false;
+  // static boolean onVmcExec = false;
   static boolean flagJours = false;
 
   ItemParam item;
@@ -1424,7 +1424,7 @@ void setVmc(int cmd) {
       break;
     }
     break;
-  case CMD_VMC_ON_FAST:
+  case CMD_VMC_FAST:
     // Mode forcé VMC (hors programmation) en vitesse rapide
     // Serial.printf("SetVmc CMD_VMC_ON_FAST: %d\n", CMD_VMC_ON_FAST);
     vmcFast = true;
@@ -1432,7 +1432,7 @@ void setVmc(int cmd) {
     on(O_VMC);
     t_start(tache_t_cmdVmcBoard);
     break;
-  case CMD_VMC_ON:
+  case CMD_VMC_SLOW:
     // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
     vmcFast = false;

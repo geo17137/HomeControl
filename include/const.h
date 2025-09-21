@@ -120,8 +120,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 //--------------------------
 #define CMD_VMC_OFF       0
 #define CMD_VMC_PROG      1
-#define CMD_VMC_ON_FAST   2
-#define CMD_VMC_ON        3
+#define CMD_VMC_FAST      2
+#define CMD_VMC_SLOW      3
 
 
 //-----------------------

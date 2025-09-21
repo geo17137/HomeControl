@@ -444,7 +444,7 @@ void _stopPowerCooking() {
 
 void _startVMC() {
   commun2_1();
-  setVmc(CMD_VMC_ON);
+  setVmc(CMD_VMC_SLOW);
 }
 
 void _stopVMC() {

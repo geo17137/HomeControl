@@ -27,15 +27,17 @@ void cuisine() {
 void vmc() {
   if (_state) {
     if (_value < 130 && _value > 100) {
-      setVmc(3);      
+      // Marche forcée lente
+      setVmc(CMD_VMC_SLOW);      
       return;
     }
     if (_value > 240) {
-      setVmc(2);      
+      // Marche forcée rapide
+      setVmc(CMD_VMC_FAST);      
       return;
     }
     if (_value < 100) {
-      setVmc(1);      
+      setVmc(CMD_VMC_PROG);      
       return;
     }
   }

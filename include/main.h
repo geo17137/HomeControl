@@ -17,8 +17,8 @@
  * @date 2023
  */
 
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef MAIN_H
+#define MAINF_H
 
 const char* version = "2025.10.07";
 
@@ -44,11 +44,10 @@ const char* version = "2025.10.07";
 #ifdef ALEXA
 #include "fauxmoESP.h"
 #endif
-#include "display.h"
+// #include "display.h"
 #include "mtr86.h"
 #include "param.h"
 #include "simple_param.h"
-#include "display.h"
 #include "rotary_encoder.h"
 #include "loop_prog.h"
 #include "local_loop.h"
@@ -221,31 +220,31 @@ fauxmoESP fauxmo;
 #endif
 // Pre-declared function prototypes
 void PubSubCallback(char* topic, byte* payload, unsigned int length);
-void writeLogs(const char * msg);
-void deleteLogs(void);
-const char *getDate(void);
+// void writeLogs(const char * msg);
+void deleteLogs();
+const char *getDate();
 void setDate(char* date);
-void localLoop(void);
+// void localLoop();
 void schedule();
-boolean isEdge(int nButton);
-void startWatering(int timeout);
-void stopWatering();
-void startWatering(int timeout);
-void stopWatering(void);
-void startTankFilling(void);
-void stopTankFilling(void);
-void localLoop(void);
-void setVmc(int cmd);
+// boolean isEdge(int nButton);
+// void startWatering(int timeout);
+// void stopWatering();
+// void startWatering(int timeout);
+// void stopWatering();
+// void startTankFilling();
+// void stopTankFilling();
+// void localLoop();
+// void setVmc(int cmd);
 
 // External function prototypes
-extern void backLightOn();
-extern void backLightOff();
+// extern void backLightOn();
+// extern void backLightOff();
 extern void _ioDisplay();
-extern char* readPortIo_O();
-extern char* readPortIo_I();
+// extern char* readPortIo_O();
+// extern char* readPortIo_I();
 extern unsigned testPortIO_O();
 extern unsigned testPortIO_I();
-extern void ioDisplay();
+// extern void ioDisplay();
 extern void initDisplay();
 extern void addDevices();
 extern void initAlexa();
