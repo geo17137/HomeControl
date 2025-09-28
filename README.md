@@ -121,6 +121,8 @@ This system represents a complete home automation solution with multiple interfa
 - ES32A08 board using 74HC595/74HC165 shift registers for I/O expansion
   https://fr.aliexpress.com/item/1005006185382987.html?spm=a2g0o.productlist.main.1.698elv0Ylv0YwW&algo_pvid=f51ea843-ec14-4632-9974-88f5128b477e&algo_exp_id=f51ea843-ec14-4632-9974-88f5128b477e-0&pdp_npi=4%40dis%21EUR%2140.96%2133.69%21%21%21313.64%21257.97%21%4021039fae17272463435504450e2d37%2112000036180720579%21sea%21FR%210%21ABX&curPageLogUid=gOixLiNgnswU&utparam-url=scene%3Asearch%7Cquery_from%3A<br>
 
+  https://github.com/geo17137/HomeControl/blob/master/DocsPdf/Schematic_ES32A08.pdf<br>
+
 - LCD display with I2C interface for local control<br>
   https://fr.aliexpress.com/item/32704155771.html?gatewayAdapt=glo2fra<br>
 
@@ -163,3 +165,4 @@ https://github.com/geo17137/HomeControlAndroidFrontEnd
 
 - General documentation<br>
   https://github.com/geo17137/HomeControl/blob/master/DocsPdf/DocGeneraleHomeControl.pdf
+
