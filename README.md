@@ -1,6 +1,5 @@
-# ESP32 Home Control System
-
-This system controls multiple home systems
+# ESP32 Home Control System<br>
+This system controls multiple home systems (readme partial IA generate)
 
 ## System Architecture
 
@@ -17,7 +16,7 @@ This system controls multiple home systems
 
 ### Software
 
-- Modular architecture with separate components for different functions
+- Modular architecture with separate components for different functions.<br>
   Multiple control interfaces:
   - Local LCD display with rotary encoder
   - MQTT for remote control via smartphone/home automation system
@@ -167,5 +166,6 @@ https://github.com/geo17137/HomeControlAndroidFrontEnd
 
 - General documentation<br>
   https://github.com/geo17137/HomeControl/blob/master/DocsPdf/DocGeneraleHomeControl.pdf
+
 
 
