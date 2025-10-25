@@ -170,6 +170,8 @@
  *     vmc 100% -> vmc ventilation max
  *  @version 2025.09.25
  *  - Revert to 2025.09.10
+ *  @version 2025.09.26
+ *  - Update const.h
  */
 
 #include "main.h"
