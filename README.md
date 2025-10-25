@@ -16,7 +16,7 @@ This system controls multiple home systems (readme partial IA generate)
 
 ### Software
 
-- Modular architecture with separate components for different functions
+- Modular architecture with separate components for different functions.<br>
   Multiple control interfaces:
   - Local LCD display with rotary encoder
   - MQTT for remote control via smartphone/home automation system
