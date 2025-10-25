@@ -28,14 +28,15 @@
 #include "io.h"
 
 //----------------------------------------------------------
-// Mise à jour des logs
+// Mise   jour des logs
 // Basé sur l'état des ports gpio
 //----------------------------------------------------------
 void logsUpdate() {
-    // Commande de la PAC
+  boolean outputState;
+  // Commande de la PAC
   static boolean flagP = true;
   static boolean flagNP;
-  boolean outputState = !gpioState(O_PAC);
+  outputState = !gpioState(O_PAC);
   if (outputState && !flagP) {
     flagP = true;
     flagNP = false;

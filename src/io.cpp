@@ -24,7 +24,7 @@
 #ifdef ES32A08
 
 // Les bits 16..23 contiennent les valeurs en sortie
-// Les bits 0..7 contiennent les données en entrée.
+// Les bits 0..7 contiennent les données en entrée
 static unsigned fieldBitIO;
 
 // Valeur à écrire dans les regsitres à décalage
@@ -54,7 +54,7 @@ unsigned readByteInput() {
 /**
  * @brief Ecrit un champ de 8 bits
  * sur les sorties commandant les relais
- * Les sorties relais sont sur les bits
+ * Les sorties relais sont sur les les bits
  * 16..23 (trois registres à décalage en série)
  * @param value valeur sur 8 bits à ecrire
  */
@@ -103,13 +103,14 @@ void clear74HC595() {
  * @param value 0 ou 1
  */
 void writeBitOutput(unsigned mask, int value) {
+  unsigned outputShiftedValue_1;
   if (value != 0)
     fieldBitIO = fieldBitIO | mask;
   else
     fieldBitIO = fieldBitIO & ~mask;
   // Isoler les 8 bits de poids forts
   // Les 8 bits de poids faible contient l'état des entrées
-  unsigned outputShiftedValue_1 = fieldBitIO & 0x0FF0000;
+  outputShiftedValue_1 = fieldBitIO & 0x0FF0000;
   if (outputShiftedValue_1 != outputShiftedValue) {
     outputShiftedValue = outputShiftedValue_1;
     put74HC595(outputShiftedValue);

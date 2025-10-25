@@ -65,7 +65,7 @@ void addDevices() {
   // Vous pouvez utiliser device_id ou device_name pour choisir l'élément sur lequel effectuer une action (relais, LED, etc.).
   // L'état est un booléen (ON/OFF) et la valeur un nombre compris entre 0 et 255 (si vous dites « mettre l'éclairage de la cuisine à 50 % », vous recevrez un 128).
   // Attention à ne pas trop tarder : il s'agit d'un rappel. Quittez dès que possible.
-  // Si vous devez effectuer une action plus complexe, définissez un indicateur et traitez-le dans votre boucle principale.
+  // Si vous devez effectuer une action plus complexe, définissez un indicateur et traitez-le dans votre boucle principale..
         
   // Serial.printf("[MAIN] Device #%d (%s) state: %s value: %d\n", device_id, device_name, state ? "ON" : "OFF", value);
   // La vérification de l'identifiant de l'appareil est plus simple si vous êtes certain de l'ordre dans lequel ils sont chargés et qu'il ne change pas.

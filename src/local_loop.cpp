@@ -39,7 +39,7 @@
 	Met à jour les messages MQTT pour
 	permettre à l'appli distante d'avoir une IHM à jour
 	même après une déconnexion/reconnexion
-	Gère les entrées par scrutation:
+	Gère les entrées par scrutation :
 	- télécommande arrosage, réservoir
 	- contact supresseur
     Met à jour les logs
@@ -142,7 +142,7 @@ void lcdReboot() {
  * @brief Appelé toutes les INTERVAL_IO_SCRUT (100 ms)
  * 
  */
-void localLoop() {
+void localLoop(void) {
 	// Commande manuelle arrosage
 	// Tâche la moins prioritaire
   	//  - Priorité 1 : supresseur
@@ -272,10 +272,10 @@ void localLoop() {
 				t_start(tache_t_surpressorFilling);
 				// Publier pour HA et appli Android
 				mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
-				// Mettre systématiquement la pompe en route
+				// Mettre systématiquement la pompe en route  
 				on(O_POMPE);
 
-				// Gérer la sécurité du supresseur (nombre excessif de démarrages)
+				// Gérer la sécurité du supresseur (nombre excessifs de démarrages)
 				if (cDlyParam->get(SURPRESSOR_SECURIT_EN)) {
 					// Démarrage monostable la première fois
 					if (!monoSurpressorSecurityStarted) {
@@ -350,8 +350,8 @@ void localLoop() {
 		// Serial.println("SURPRESSOR_OFF");
 		lcdPrintString(SURPRESSOR_OFF, 1, 0, false);
 	} 
-	// Gestion des erreurs surpresseur.
-	// Ne peut pas se faire dans monoSurpressorFilling (ISR)
+	// Gestion  des erreurs surpresseur.
+	// Ne  peut pas se faire dans monoSurpressorFilling (ISR)
 	if (erreurSupresseur) {
 		erreurSupresseur = false;
 		// Déclenche mise à jour appli Android (menu relance)

@@ -701,7 +701,6 @@ void encoderOutputTask2(void (*funcOn)(), void (*funcOff)()) {
   case 1:
     funcToCall = funcOff;
     break;
-  default: ;
   }
 }
 
@@ -749,7 +748,6 @@ void encoderOutputTask() {
   case 6:
     funcToCall = _ioDisplay;
     break;
-  default: ;
   }
 }
 
@@ -790,7 +788,6 @@ void encoderScheduledActionTask() {
   case 4:
     funcToCall = buttonFuncLevel2_5_4;
     break;
-  default: ;
   }
 }
 
@@ -805,7 +802,6 @@ void encoderLogSettingsTask() {
   case 1:
     funcToCall = _ioDisplay;
     break;
-  default: ;
   }
 }
 
@@ -836,7 +832,6 @@ void encoderTimeSummerTask() {
   case 1:
     funcToCall = _ioDisplay;
     break;
-  default: ;
   }
 }
 
@@ -862,7 +857,6 @@ void encoderTimerTask() {
   case 4:
     funcToCall = _ioDisplay;
     break;
-  default: ;
   }
 }
 
@@ -929,7 +923,6 @@ void encoderLevel0Task() {
     // - Quit
     funcToCall = _ioDisplay;
     break;
-  default: ;
   }
 }
 
@@ -1077,33 +1070,33 @@ void prepareOnOff(void (*funcOn)(), void (*funcOff)()) {
 //--------------------------------------------------------
 // Commande arrosage
 void buttonFuncLevel2_1_0() {
-  rotary = (int)ugpioSRead(O_EV_ARROSAGE);
+  rotary = ugpioSRead(O_EV_ARROSAGE);
   prepareOnOff(_startWatering, _stopWatering);
 }
 
 // Commande remplissage réservoir
 void buttonFuncLevel2_1_1() {
-  rotary = (int)ugpioSRead(O_EV_IRRIGATION);
+  rotary = ugpioSRead(O_EV_IRRIGATION);
   prepareOnOff(_startIrrigation, _stopIrrigation);
 }
 // Commande mise sous tension éléctroménager
 void buttonFuncLevel2_1_2() {
-  rotary = (int)ugpioRead(O_FOUR);
+  rotary = ugpioRead(O_FOUR);
   prepareOnOff(_startPowerCooking, _stopPowerCooking);
 }
 // Commande VMC
 void buttonFuncLevel2_1_3() {
-  rotary = (int)ugpioRead(O_VMC);
+  rotary = ugpioRead(O_VMC);
   prepareOnOff(_startVMC, _stopVMC);
 }
 // Commande arrosage agrumes
 void buttonFuncLevel2_1_4() {
-  rotary = (int)ugpioSRead(O_EV_EST);
+  rotary = ugpioSRead(O_EV_EST);
   prepareOnOff(_startWateringLemon, _stopWateringLemon);
 }
 // Commande PAC
 void buttonFuncLevel2_1_5() {
-  rotary = (int)ugpioRead(O_PAC);
+  rotary = ugpioRead(O_PAC);
   prepareOnOff(_startPowerPac, _stopPowerPac);
 }
 
