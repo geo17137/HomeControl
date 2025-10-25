@@ -1,6 +1,5 @@
-# ESP32 Home Control System
-
-This system controls multiple home systems
+# ESP32 Home Control System<br>
+This system controls multiple home systems (IA generate)
 
 ## System Architecture
 

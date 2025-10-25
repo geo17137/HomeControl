@@ -57,7 +57,7 @@
 // #define  CONFIG_ARDUINO_LOOP_STACK_SIZE 2*8192
 //-------------- Délais monostables ------------------------------
 // Delay de mise hors tension PAC (s)
-#define DLY_PAC_OFF 5 * 60
+#define DLY_PAC_OFF (5*60)
 // Retard envoi commande carte IR après mise sous tension PAC (s)
 #define DLY_PAC_ON  20
 // Retard commande carte deportée fast vmc après mise sa mise sous tension (s)
@@ -66,24 +66,24 @@
 #define DLY_VMC_BOARD_ON_OFF 60
 // Délai COUPURE ECLAIRAGE LCD (s)
 #define DLY_BACK_LIGHT 10
-// Délai COUPURE ECLAIRAGE LCD panneau electrique ouvert (s)
+// Délai COUPURE ECLAIRAGE LCD panneau électrique ouvert (s)
 #define DLY_BACK_LIGHT2 180
 // Délai reprise affichage par défaut (s)
-#define DLY_DEFAULT_SCREEN 6 * 60
+#define DLY_DEFAULT_SCREEN (6*60)
 // Délai de coupure circuit2 (s)
-#define DLY_DEFAULT_OFF_CIRCUIT2 60*60
+#define DLY_DEFAULT_OFF_CIRCUIT2 (60*60)
 // Délay avant mise en sécurité supresseur (s)
 // 3 cycles de remplissage / vidage
-#define DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT 11*60
+#define DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT (11*60)
 // Nombre de mises en route supresseur autorisés durant 
 // DLY_DEFAUT_SUPRESSOR_SECURITY_TIMEOUT
 #define MAX_SUPRESSOR_FILLING_IN_TIME 3
 // Période bistable de reglage débit (s)
 // 20 rapports cycliques possibles (pas de 5%)
-const int PAS_PERIODE_DEBIT = 5;
+constexpr int PAS_PERIODE_DEBIT = 5;
 // Période du rapport cyclique vanne EST en s
-const int PERIODE_DEBIT = 100;
-const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
+constexpr int PERIODE_DEBIT = 100;
+constexpr int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 
 // Utilisé par wattering
 #define TIMEOUT    1
@@ -95,14 +95,14 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define INTERVAL_RESET_WDT  200
 #define INTERVAL_ROTATE_DISPLAY  500
 #define INTERVAL_ROTATARY_SCHEDULE 10
-#define INTERVAL_IR_SEND 15*1000
-#define INTERVAL_WIFI_TEST 10*60*10000
-#define INTERVAL_WIFI_STRENG_SEND 30*1000
-#define INTERVAL_MQTT_CONNECT_TEST 5*1000
+#define INTERVAL_IR_SEND (15*1000)
+#define INTERVAL_WIFI_TEST (10*60*10000)
+#define INTERVAL_WIFI_STRENG_SEND (30*1000)
+#define INTERVAL_MQTT_CONNECT_TEST (5*1000)
 #ifdef TIME_SIMULATOR
 #define INTERVAL_SCHEDULE 100
 #else
-#define INTERVAL_SCHEDULE 60*1000
+#define INTERVAL_SCHEDULE (60*1000)
 #endif
 
 //----------------------------
@@ -257,6 +257,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_DEBUG_VALUE    TOPIC_PREFIX  "homecontrol/debug"
 #define TOPIC_WIFI_STRENG    TOPIC_PREFIX  "homecontrol/wifi_streng"
 #define TOPIC_STATUS_CUISINE TOPIC_PREFIX  "homecontrol/cuisine_status"
+#define TOPIC_STATUS_WATERING TOPIC_PREFIX  "homecontrol/watering_status"
 #define TOPIC_STATUS_VMC                   "homecontrol/vmc_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
 #define SUB_GPIO0_ACTION     TOPIC_PREFIX  "circuit2/action"

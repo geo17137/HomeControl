@@ -70,4 +70,5 @@ extern void backLightOn();
 extern void backLightOff();
 extern char* readPortIo_I();
 extern void backLightOff();
+extern char* getGpioState(char* buffer);
 #endif

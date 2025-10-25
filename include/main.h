@@ -20,7 +20,7 @@
 #ifndef MAIN_H
 #define MAINF_H
 
-const char* version = "2025.10.07";
+const char* version = "2025.10.25";
 
 // Definitions for print modes
 #define WEB_PRINT false

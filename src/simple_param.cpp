@@ -20,10 +20,10 @@ void SimpleParam::split() {
   char* ptr;
   int count = 0;
   ptr = strtok(_buffer, _motif); // diviser la chaîne
-  while (ptr != NULL) {
+  while (ptr != nullptr) {
     _param[count] = atoi(ptr);
     count++;
-    ptr = strtok(NULL, _motif);
+    ptr = strtok(nullptr, _motif);
     if (count == _nparam) {
       break;
     }
@@ -72,10 +72,10 @@ SimpleParam::~SimpleParam() {
  // free(_sparam);
  // free(_buffer);
  // free(_param);
-  _motif = NULL;
-  _sparam = NULL;
-  _buffer = NULL;
-  _param = NULL; 
+  _motif = nullptr;
+  _sparam = nullptr;
+  _buffer = nullptr;
+  _param = nullptr;
 }
 
 /**
