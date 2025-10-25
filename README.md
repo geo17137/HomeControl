@@ -1,5 +1,5 @@
 # ESP32 Home Control System<br>
-This system controls multiple home systems (IA generate)
+This system controls multiple home systems (readme partial IA generate)
 
 ## System Architecture
 
@@ -166,5 +166,6 @@ https://github.com/geo17137/HomeControlAndroidFrontEnd
 
 - General documentation<br>
   https://github.com/geo17137/HomeControl/blob/master/DocsPdf/DocGeneraleHomeControl.pdf
+
 
 
