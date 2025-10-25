@@ -167,10 +167,19 @@
  *  - Fusion des commandes vmc : 
  *     vmc 10%  -> vmc programmée
  *     vmc 50%  -> vmc ventilation faible
+<<<<<<< HEAD
  *     vmc 100% -> vmc ventilation max 
  *  @version 2025.09.25
  *  - Update readme
 */
+=======
+ *     vmc 100% -> vmc ventilation max
+ *
+ *  @version 2025.09.25
+ *  - Correction taille buffer PubSubCallback : TOPIC_GET_VERSION
+ *  - Nettoyage du code
+ */
+>>>>>>> master
 
 #include "main.h"
 #include "io.h"
@@ -257,37 +266,27 @@ const char* bootRaison() {
   switch (reason) {
   case ESP_RST_UNKNOWN:
     return "Reset unknown";
-    break;
   case ESP_RST_POWERON:
     return "Reset power-on";
-    break;
     // case ESP_RST_EXT:
     //   return "Reset by external pin (not applicable for ESP32)";
     //   break;
   case ESP_RST_SW:
     return "Reset via esp_restart";
-    break;
   case ESP_RST_PANIC:
     return "Reset exception/panic";
-    break;
   case ESP_RST_INT_WDT:
     return "Reset interrupt watchdog";
-    break;
   case ESP_RST_TASK_WDT:
     return "Reset due to task watchdog";
-    break;
   case ESP_RST_WDT:
     return "Reset due other watchdogs";
-    break;
   case ESP_RST_DEEPSLEEP:
     return "Reset after exiting deep sleep mode";
-    break;
   case ESP_RST_BROWNOUT:
     return "Brownout reset";
-    break;
   case ESP_RST_SDIO:
     return "Reset over SDIO";
-    break;
   default:
     return "";
   }
@@ -418,7 +417,7 @@ void initTime(boolean wifiConnected) {
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
   if (wifiConnected) {
     configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
-    struct tm timeinfo;
+    struct tm timeinfo{};
     if (getLocalTime(&timeinfo)) {
       rtc->setTimeStruct(timeinfo);    
     }
@@ -445,6 +444,19 @@ const char* getDate() {
     rtc->getMinute(),
     rtc->getSecond());
   return date;
+}
+
+char* getGpioState(char* buffer) {
+  char str[4];
+  sprintf(buffer, "%s;%s;%s;%u;%d;%s",
+  itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),      
+  gpioRead(O_EV_IRRIGATION),
+  gpioRead(O_FOUR),
+  cmdVanneEst,
+      // gpioRead(O_EV_EST),
+  vmcMode,
+  gpioReadPac());
+  return buffer;
 }
 
 void setDate(char* date) {
@@ -587,7 +599,7 @@ void initWifiStation() {
  */
 boolean initWifiStation(boolean flagDisplay) {
   char buffer[32];
-  int i;
+  int i=0;
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -737,7 +749,7 @@ void setup() {
   fileGlobalScheduledParam = initGlobalScheduledParam(FORCE_GLOBAL_SCHEDULED_PARAM);
   filePersistantParam = initPersitantFileDevice(FORCE_PERSISTANT_PARAM);
   
-  if (wifiConnected = initWifiStation(true)) {
+  if ((wifiConnected = initWifiStation(true))) {
     sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
     mqttConnect = initMQTTClient(true);
   }
@@ -797,7 +809,7 @@ void setup() {
   // Set watch dog timeout (10s)
 #ifdef ENABLE_WATCHDOG
   esp_task_wdt_init(WDT_TIMEOUT, true); // enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL);               // add current thread to WDT watch
+  esp_task_wdt_add(nullptr);               // add current thread to WDT watch
 #endif
 #ifdef DEBUG_OUTPUT
   print("End setup\n", OUTPUT_PRINT);
@@ -1143,18 +1155,18 @@ void schedule() {
             // Circuit 2 est une vanne intallée sur le circuit d'arrosage des tomates
             // et permet un arrossage non journalier
             // La périodicité en jour est mémorisée le champ libre item.HMax
-            ItemParam item = cParam->get(IRRIGATION, 0);
+            ItemParam item_param = cParam->get(IRRIGATION, 0);
             // Serial.printf("itemJ.HMax=%d, jours=%d\n", itemJ.HMax, jours);
             // Gestion de la commande déportée de la vanne gérant la période d'irrigation
             // non journalière
-            if (item.HMax >= joursCircuit2) {
+            if (item_param.HMax >= joursCircuit2) {
               mqttClient.publish(SUB_GPIO0_ACTION, "on");
               // La coupure est programmée dans le dispositif distant
               // Reset du compte de jours
               joursCircuit2 = 0;
               // Mémorisation
-              item.MMax = 0;
-              cParam->set(IRRIGATION, 0, item);
+              item_param.MMax = 0;
+              cParam->set(IRRIGATION, 0, item_param);
               // itemJ.print();
               cParam->updateStringParam(cParam->getStr());
               // cParam->print();
@@ -1313,6 +1325,7 @@ void startWatering(int timeout) {
   on(O_TRANSFO);
   on(O_EV_ARROSAGE);
   on(O_POMPE);
+  mqttClient.publish(TOPIC_STATUS_WATERING, "on"); 
 }
 /**
  * @brief  Arrêt lance arrosage
@@ -1326,6 +1339,7 @@ void stopWatering() {
   off(O_EV_ARROSAGE);
   isWatering = false;
   wateringNoTimeOut = 0;
+  mqttClient.publish(TOPIC_STATUS_WATERING, "off"); 
 }
 
 //-----------------------------------------
@@ -1424,6 +1438,8 @@ void setVmc(int cmd) {
       vmcFast = true;
       vmcMode = VMC_PROG_ON_FAST;
       break;
+    default:
+      break;
     }
     break;
   case CMD_VMC_FAST:
@@ -1441,7 +1457,8 @@ void setVmc(int cmd) {
     vmcMode = VMC_ON;
     t_start(tache_t_cmdVmcBoard);
     break;
-  default: ;
+  default:
+    break;
   }
   char buffer[4];
   itoa(vmcMode, buffer, 10);
@@ -1457,13 +1474,13 @@ void loop() {
   static ulong tpsRot = 0;
   static ulong tpsRotary = 0;
   static ulong tpsProg = 0;
-  static ulong tpsRotaryUpdt = 0;
+  // static ulong tpsRotaryUpdt = 0;
   static ulong tpsSchedule = 0;
-  static ulong tpsWifiTest = 0;
+  // static ulong tpsWifiTest = 0;
   static ulong tpsWDTReset = 0;
   static ulong tpsWifiSignalStreng = INTERVAL_WIFI_STRENG_SEND;
    static unsigned mqttConnectTest=0;
-  static boolean esp_task_wdt = true;
+  // static boolean esp_task_wdt = true;
   static unsigned rotate;
 
 #ifdef EXEC_TIME_MEASURE
@@ -1513,7 +1530,7 @@ void loop() {
       millis() - mqttConnectTest > INTERVAL_MQTT_CONNECT_TEST) {
     mqttConnectTest = millis();
     if (initWifiStation(false)) 
-      if (mqttConnect = initMQTTClient(false))
+      if ((mqttConnect = initMQTTClient(false)))
         lcdPrintChar('c', 2, 0);
       else
         lcdPrintChar('n', 2, 0);
@@ -1599,14 +1616,13 @@ void loop() {
   // Envoi du niveau en db WiFi RSSI
   if (millis() - tpsWifiSignalStreng > INTERVAL_WIFI_STRENG_SEND ) {
     tpsWifiSignalStreng = millis();
-    if (!isLcdDisplayOn || !wifiConnected) {
+    if (!isLcdDisplayOn || !wifiConnected)
       return;
     //long rssi = WiFi.RSSI();
-      sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
+    sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
     // Test niveau RSSI
     // mqttClient.publish(TOPIC_WIFI_STRENG, rssi_buffer);
-      lcdPrintRssi(rssi_buffer);
-    }
+    lcdPrintRssi(rssi_buffer);
   }  
   
   // Suspend pour 5s, ne pas utiliser ici
@@ -1617,6 +1633,7 @@ void loop() {
 #endif
 }
 
+bool bReadVersion;
 /**
  *@brief  Réception des messages MQTT
  *        Attention si le buffer MQTT est trop petit le message correspondant est
@@ -1708,24 +1725,25 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   //------------------  TOPIC_GET_GPIO ----------------------
   if (cmp(topic, TOPIC_GET_GPIO)) {
     static char tabValue[24];
-    char str[4];
+    // char str[4];
     // unsigned arrosage = itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut);
     // gpioRead(O_EV_ARROSAGE);
-    sprintf(tabValue, "%s;%s;%s;%u;%d;%s",
-      itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),
-      gpioRead(O_EV_IRRIGATION),
-      gpioRead(O_FOUR),
-      cmdVanneEst,
-      // gpioRead(O_EV_EST),
-      vmcMode,
-      gpioReadPac());
+    // sprintf(tabValue, "%s;%s;%s;%u;%d;%s",
+    //   itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),
+    //   gpioRead(O_EV_IRRIGATION),
+    //   gpioRead(O_FOUR),
+    //   cmdVanneEst,
+    //   // gpioRead(O_EV_EST),
+    //   vmcMode,
+    //   gpioReadPac());
       // Serial.println(tabValue);
-    mqttClient.publish(TOPIC_GPIO, tabValue);
+ // mqttClient.publish(TOPIC_GPIO, tabValue);
+    mqttClient.publish(TOPIC_GPIO, getGpioState(tabValue));
     return;
   }
   //------------------  TOPIC_CMD_ARROSAGE ----------------------
   if (cmp(topic, TOPIC_CMD_ARROSAGE)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
     switch (cmd) {
     case 0:
       // Serial.println("TOPIC_CMD_ARROSAGE Stop watering");
@@ -1742,12 +1760,14 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       startWatering(NO_TIMEOUT);
       wateringNoTimeOut = 2;
       break;
+    default:
+      break;
     }
     return;
   }
   //------------------  TOPIC_CMD_IRRIGATION ----------------------
   if (cmp(topic, TOPIC_CMD_IRRIGATION)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
     if (cmd)
       startTankFilling();
     else
@@ -1756,7 +1776,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_CUISINE ----------------------
   if (cmp(topic, TOPIC_CMD_CUISINE)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
 #ifdef PERSISTANT_POWER_COOK   
     cPersistantParam->set(POWER_COOK, cmd);
     filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1773,13 +1793,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_CMD_VMC ----------------------
   if (cmp(topic, TOPIC_CMD_VMC)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
     setVmc(cmd);
     return;
   }
   //------------------  TOPIC_CMD_VANNE_EST ----------------------
   if (cmp(topic, TOPIC_CMD_VANNE_EST)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
     if (cmd) {
       on(O_TRANSFO);
       on(O_EV_EST);
@@ -1799,11 +1819,11 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     // print(buffer, OUTPUT_PRINT);
 
     // cmdVanneEst = cmp(strPayload.c_str(), "1");
-    return;
+    // return;
   }
   //------------------  TOPIC_CMD_PAC ----------------------
   if (cmp(topic, TOPIC_CMD_PAC)) {
-    unsigned cmd = atoi(strPayload.c_str());
+    int cmd = atoi(strPayload.c_str());
     // Logique inversée pour relai PAC
     // 1 = arret
     if (cmd) {
@@ -1872,19 +1892,17 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_GET_VERSION ----------------------
   if (cmp(topic, TOPIC_GET_VERSION)) {
-    // long rssi = WiFi.RSSI();
-    // sprintf(rssi_buffer, "RSSI:%ld", WiFi.RSSI());
-    static char info[128];
-    sprintf(info, "%s\n%s, RSSI:%lddb\n%s", 
-                   version, WiFi.localIP().toString().c_str(), WiFi.RSSI(), getDate());
-    // String info = String(version) + "\n" + WiFi.localIP().toString() + ", " + rssi_buffer + "db\n" + String(getDate());
+    //static char info[256];
+    //sprintf(info, "%s\n%s, RSSI:%lddb\n%s",
+    //               version, WiFi.localIP().toString().c_str(), WiFi.RSSI(), getDate());
+    String info = String(version) + "\n" + WiFi.localIP().toString() + ", " + WiFi.RSSI() /*rssi_buffer*/ + "db\n" + String(getDate());
     // Serial.println(info);
-    mqttClient.publish(TOPIC_READ_VERSION, info);
+    mqttClient.publish(TOPIC_READ_VERSION, info.c_str());
     return;
   }
   //------------------  TOPIC_WATCH_DOG_OFF ----------------------
   if (cmp(topic, TOPIC_WATCH_DOG_OFF)) {
-    esp_task_wdt_delete(NULL);
+    esp_task_wdt_delete(nullptr);
     delay(1);
     //Serial.println("WD disabled"); 
     return;
