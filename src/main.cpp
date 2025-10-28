@@ -591,7 +591,7 @@ void initWifiStation() {
  */
 boolean initWifiStation(boolean flagDisplay) {
   char buffer[32];
-  int i;
+  int i=0;
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
