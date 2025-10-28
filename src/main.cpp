@@ -171,7 +171,9 @@
  *  @version 2025.09.25
  *  - Revert to 2025.09.10
  *  @version 2025.09.26
- *  - Update const.h
+ *  - Update const.h$
+ *  @version 2025.09.28
+ *  - Publish watering status && power cooking status to HA
  */
 
 #include "main.h"
@@ -1733,16 +1735,19 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       // Serial.println("TOPIC_CMD_ARROSAGE Stop watering");
       stopWatering();
       wateringNoTimeOut = 0;
+      mqttClient.publish(TOPIC_STATUS_WATERING, "off");    
       break;
     case 1:
       // Serial.println("Watering timeout");
       startWatering(TIMEOUT);
       wateringNoTimeOut = 0;
+      mqttClient.publish(TOPIC_STATUS_WATERING, "on");  
       break;
     case 2:
       // Serial.println("Watering no timeout");
       startWatering(NO_TIMEOUT);
-      wateringNoTimeOut = 2;
+      wateringNoTimeOut = 2;   
+      mqttClient.publish(TOPIC_STATUS_WATERING, "on");
       break;
     }
     return;
