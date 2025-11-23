@@ -261,37 +261,27 @@ const char* bootRaison() {
   switch (reason) {
   case ESP_RST_UNKNOWN:
     return "Reset unknown";
-    break;
   case ESP_RST_POWERON:
     return "Reset power-on";
-    break;
     // case ESP_RST_EXT:
     //   return "Reset by external pin (not applicable for ESP32)";
     //   break;
   case ESP_RST_SW:
     return "Reset via esp_restart";
-    break;
   case ESP_RST_PANIC:
     return "Reset exception/panic";
-    break;
   case ESP_RST_INT_WDT:
     return "Reset interrupt watchdog";
-    break;
   case ESP_RST_TASK_WDT:
     return "Reset due to task watchdog";
-    break;
   case ESP_RST_WDT:
     return "Reset due other watchdogs";
-    break;
   case ESP_RST_DEEPSLEEP:
     return "Reset after exiting deep sleep mode";
-    break;
   case ESP_RST_BROWNOUT:
     return "Brownout reset";
-    break;
   case ESP_RST_SDIO:
     return "Reset over SDIO";
-    break;
   default:
     return "";
   }
