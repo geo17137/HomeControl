@@ -266,6 +266,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_PAC_IR_PARAM_APPLY TOPIC_PREFIX "mitsubishi/param/apply"
 #define TOPIC_PAC_IR_ON          TOPIC_PREFIX "mitsubishi/param/on"
 #define TOPIC_PAC_IR_OFF         TOPIC_PREFIX "mitsubishi/param/off"
+#define TOPIC_PAC_IR_TEMP        TOPIC_PREFIX "mitsubishi/param/temp"
+#define TOPIC_PAC_IR_FAN         TOPIC_PREFIX "mitsubishi/param/fan"
 
 //-------------Publications pour l'appli VmcCmd (carte déportée command marche rapide vmc)
 #define VMC_BOARD_ACTION  TOPIC_PREFIX "vmc_board/action"

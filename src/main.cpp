@@ -21,7 +21,7 @@
  * - Logs sur perte de WiFi
  * 
  * @version 2.6.5 3/9/23
- * - Configuration dynamique des monostables arrosage, remplissage réservoir, irrigation vanne est
+ * - Configuration dynamique des monostables arrosage, remplissage réservoir, irrigation vanne EST
  * 
  * @version 2.6.6 11/9/23
  * - Correction mineure dans les messages de loopProg
@@ -156,7 +156,7 @@
  *  @version 2025.09.06
  *  - Ajout commande alexa pour les appareils electro ménager librairie	vintlabs/FauxmoESP @ ^3.4.1
  *   Supression librairie esphome/AsyncTCP-esphome @ ^2.0.0 remplacement par esp32async/AsyncTCP@^3.4.7
- *   Ajout des devices Alexa: Vmc, Fats Vmc, Vmc Prog, Arrosage
+ *   Ajout des devices Alexa: Vmc, Fast Vmc, Vmc Prog, Arrosage
  *   Rétablisement à l'original de void WebServer::_handleRequest()) dans
  *   C:\Users\xxx\.platformio\packages\framework-arduinoespressif32\libraries\WebServer\src\WebServer.cpp
  *
@@ -166,7 +166,7 @@
  *  @version 2025.09.10
  *  - Fusion des commandes vmc : 
  *     vmc 10%  -> vmc programmée
- *     vmc 50%  -> vmc ventilation faible
+ *     vmc 50%  -> vmc ventilation au ralenti
  *     vmc 100% -> vmc ventilation max
  *  @version 2025.09.25
  *  - Revert to 2025.09.10
@@ -174,6 +174,8 @@
  *  - Update const.h$
  *  @version 2025.09.28
  *  - Publish watering status && power cooking status to HA
+ *  @version 2026.01.08
+ *  - Pac command via Alexa (only on, off)
  */
 
 #include "main.h"
@@ -554,20 +556,18 @@ void writeLogs(const char* log) {
 
 #ifdef WIFI_MANAGER
 void initWifiStation() {
-  WiFiManager wm;
+  WiFi.setHostname(HOSTNAME);
   // bool res;
   Serial.begin(115200);
   delay(500);
   Serial.println();
-
+  WiFiManager wm;
   WiFi.softAP(SSID_AP, PASSWD);
-
   if (!wm.autoConnect(SSID_AP, PASSWD))
     Serial.println("Pas de connexion");
   else
     Serial.println("Connexion établie");
   WiFi.enableAP(false);
-  WiFi.setHostname(HOSTNAME);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   initOTA();
@@ -582,6 +582,7 @@ void initWifiStation() {
 boolean initWifiStation(boolean flagDisplay) {
   char buffer[32];
   int i=0;
+  WiFiClass::setHostname(hostname);  
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -595,7 +596,6 @@ boolean initWifiStation(boolean flagDisplay) {
     if (++i > 3)
       return false;
   }
-  WiFiClass::setHostname(hostname);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);

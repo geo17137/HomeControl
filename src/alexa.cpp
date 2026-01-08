@@ -44,6 +44,40 @@ void vmc() {
   setVmc(0);
 }
 
+void clim() {
+  if (_state) {
+    // mettre la PAC sous tension
+    irSendPacOff = false;
+    on(O_PAC);
+#ifdef PERSISTANT_PAC
+    cPersistantParam->set(PAC, 1);
+#endif
+    t_start(tache_t_monoPacOn);
+    t_stop(tache_t_monoPacOff);
+    #ifdef PERSISTANT_PAC
+      cPersistantParam->set(PAC, 1);
+    #endif
+  }
+  else {
+      mqttClient.publish(TOPIC_PAC_IR_OFF, "");
+      // Couper alim PAC après DLY_OFF secondes
+      t_start(tache_t_monoPacOff); // Logique inversée pour relai PAC
+      t_stop(tache_t_monoPacOn);
+      irSendPacOff = true;
+#ifdef PERSISTANT_PAC
+      cPersistantParam->set(PAC, 0);
+#endif
+  } 
+  #ifdef PERSISTANT_PAC
+    filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
+  #endif
+}
+
+void setClimTemp() {
+    static char buffer[10];
+    mqttClient.publish(TOPIC_PAC_IR_TEMP, itoa(_value, buffer, 10));  
+}
+
 void arrosage() {
   if (_state) {
     startWatering(TIMEOUT);
@@ -53,11 +87,14 @@ void arrosage() {
   stopWatering();
 }
 
+
 void addDevices() {
   // Ne pas modifier l'ordre
   fauxmo.addDevice(S_CUISINE);
   fauxmo.addDevice(S_VMC);
   fauxmo.addDevice(S_LANCE_ARROSAGE);
+  fauxmo.addDevice(S_CLIM);
+// fauxmo.addDevice(S_PAC_TEMP);
 
   fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {
       
@@ -74,7 +111,7 @@ void addDevices() {
     _state = state;
     _value = value;
     // Par prudence on vérifie l'indice
-    if (device_id < size)
+    if (device_id < SIZE)
       funcToCall[device_id]();
   });
 }
