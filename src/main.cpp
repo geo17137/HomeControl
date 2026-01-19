@@ -176,6 +176,8 @@
  *  - Publish watering status && power cooking status to HA
  *  @version 2026.01.08
  *  - Pac command via Alexa (only on, off)
+ *  @version 2026.01.18
+ *  - Send VMC status via mqtt in prog mode
  */
 
 #include "main.h"
@@ -1185,23 +1187,13 @@ void schedule() {
 #ifdef DEBUG_OUTPUT_SCHEDULE
           Serial.printf("%02d:%02d, vmcMode=%d \n", h, m, vmcMode);
 #endif
-          onVmc = 1;
-          if (item.enable == 2)
-            onVmc = 2; // marche rapide
           switch (vmcMode) {
           case VMC_STOP:
           case VMC_ON_FAST:
           case VMC_ON: break;
           default:
-            on(O_VMC);
-            t_start(tache_t_cmdVmcBoard);
-            vmcMode = VMC_PROG_ON;
-            if (onVmc == 2) {
-              vmcFast = true;
-              vmcMode = VMC_PROG_ON_FAST;
-              // Démarrage carte VMC marche rapide
-              // t_start(tache_t_cmdVmcBoard);
-            }
+              onVmc = item.enable;
+              setVmc(CMD_VMC_PROG);
             break;
           }
           break;
@@ -1266,15 +1258,13 @@ void schedule() {
 #ifdef DEBUG_OUTPUT_SCHEDULE
           Serial.printf("%02d:%02d off(O_VMC)\n", h, m);
 #endif
-          onVmc = 0;
           switch (vmcMode) {
           case VMC_STOP:
           case VMC_ON:
           case VMC_ON_FAST: break;
           default:
-            off(O_VMC);
-            vmcFast = false;
-            vmcMode = VMC_PROG_OFF;
+            onVmc = 0;
+            setVmc(CMD_VMC_PROG);
             break;
           }
           break;
@@ -1456,7 +1446,7 @@ void loop() {
   static ulong tpsWifiTest = 0;
   static ulong tpsWDTReset = 0;
   static ulong tpsWifiSignalStreng = INTERVAL_WIFI_STRENG_SEND;
-   static unsigned mqttConnectTest=0;
+  static unsigned mqttConnectTest=0;
   static boolean esp_task_wdt = true;
   static unsigned rotate;
 

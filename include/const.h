@@ -373,6 +373,9 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
   auto:h_min:m_min:h_max:m_max: N_PLAGE x
   Chaque plages comporte 5 items
   auto : "1" programmé, "0" non programmé ("2" pour la commande pleine vitesse VMC)
+*/
+#define VMC_FAST_PROG 2
+/*
   h_min : heure de d'enclenchement de l'action
   m_min : minute d'enclenchement de l'action
   h_max : heure d'arrèt de l'action
