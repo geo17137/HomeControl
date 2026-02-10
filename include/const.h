@@ -122,7 +122,12 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define CMD_VMC_PROG      1
 #define CMD_VMC_FAST      2
 #define CMD_VMC_SLOW      3
+#define CMD_VMC_CO2_OFF   4
+#define CMD_VMC_CO2_SLOW  5
+#define CMD_VMC_CO2_FAST  6
 
+// CMD_VMC_PROG a deux sous modes 1 slow, 2 fast (VMC_FAST_PROG)
+// placés dans le champ auto de param (pour la VMC)
 
 //-----------------------
 //    Sorties relais
@@ -373,6 +378,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
   auto:h_min:m_min:h_max:m_max: N_PLAGE x
   Chaque plages comporte 5 items
   auto : "1" programmé, "0" non programmé ("2" pour la commande pleine vitesse VMC)
+  VMC_FAST_PROG =2
 */
 #define VMC_FAST_PROG 2
 /*

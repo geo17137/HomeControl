@@ -20,7 +20,7 @@
 #ifndef MAIN_H
 #define MAINF_H
 
-const char* version = "2026.01.19";
+const char* version = "2026.02.09";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -175,6 +175,7 @@ unsigned cmdVanneEst = 1;
 unsigned onVmc;
 unsigned wateringNoTimeOut;
 unsigned n_supressorFillingInTime;
+unsigned vmcLastMode;
 int vmcMode;
 char rssi_buffer[10];
 

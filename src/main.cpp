@@ -178,6 +178,8 @@
  *  - Pac command via Alexa (only on, off)
  *  @version 2026.01.18
  *  - Send VMC status via mqtt in prog mode
+ *  @version 2026.02.09
+ *  - VMC monitoring via CO2 sensor in HA automation 
  */
 
 #include "main.h"
@@ -1425,12 +1427,49 @@ void setVmc(int cmd) {
     vmcMode = VMC_ON;
     t_start(tache_t_cmdVmcBoard);
     break;
-  default: ;
+  case CMD_VMC_CO2_OFF: 
+    vmcMode = vmcLastMode;
+    switch (vmcMode) {
+      case VMC_STOP:
+        off(O_VMC);
+        break;
+      case VMC_ON:
+        break;  
+      case VMC_ON_FAST:
+        vmcFast = false;
+        t_start(tache_t_cmdVmcBoard);
+        break; 
+      case VMC_PROG_OFF:
+        off(O_VMC);
+        vmcFast = false;
+        break;
+      case VMC_PROG_ON:
+        t_start(tache_t_cmdVmcBoard);      
+        vmcFast = false;
+        break;          
+      case VMC_PROG_ON_FAST:
+        t_start(tache_t_cmdVmcBoard);      
+        vmcFast = true;
+        break;           
+    }
+    break; 
+  case CMD_VMC_CO2_SLOW:
+  case CMD_VMC_CO2_FAST:
+    vmcLastMode = vmcMode;
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF) {
+      vmcFast = false;
+      vmcMode = VMC_ON;
+      on(O_VMC);    
+      t_start(tache_t_cmdVmcBoard);
+    }  
+    break;       
+  default: break;
   }
   char buffer[4];
   itoa(vmcMode, buffer, 10);
   mqttClient.publish(TOPIC_STATUS_VMC, buffer); 
 }
+
 
 //-----------------------------------
 // Boucle de scrutation

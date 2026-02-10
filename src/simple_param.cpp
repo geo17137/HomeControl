@@ -8,7 +8,7 @@
 #include "simple_param.h"
 
 /**
- * @brief Splits the parameter string into individual integer parameters.
+ * @brief Splits the parameter string _sparam into individual integer parameters.
  * 
  * This function modifies the source string by using strtok to tokenize the string
  * based on the specified motif. The tokens are then converted to integers and stored
