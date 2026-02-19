@@ -74,8 +74,8 @@ void clim() {
 }
 
 void setClimTemp() {
-    static char buffer[10];
-    mqttClient.publish(TOPIC_PAC_IR_TEMP, itoa(_value, buffer, 10));  
+//    static char buffer[10];
+//    mqttClient.publish(TOPIC_PAC_IR_TEMP, itoa(_value, buffer, 10));  
 }
 
 void arrosage() {

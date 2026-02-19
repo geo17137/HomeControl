@@ -178,7 +178,11 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 // Commande mqtt
 #define S_OFF "off"
 #define S_ON  "on"
-
+#define S_OFF_SHUTDOWN "offs"
+// Status PAC utilisé pour init hA (OFF, ShutDown, ON)
+#define PAC_STATUS_OFF  0
+#define PAC_STATUS_OFFS 1
+#define PAC_STATUS_ON   2
 //-----------------------
 //    Entrées
 //-----------------------
@@ -249,7 +253,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_GET_GLOBAL_SCHED TOPIC_PREFIX "homecontrol/global_sched_get" 
 #define TOPIC_WRITE_GLOBAL_SCHED TOPIC_PREFIX "homecontrol/global_sched_write" 
 #define TOPIC_MQTT_TEST       TOPIC_PREFIX "homecontrol/mqtt_test" 
-
+#define TOPIC_MQTT_GET_STATUS TOPIC_PREFIX "homecontrol/devices/get_status"
 //-------------Publications--------------------
 #define TOPIC_READ_VERSION   TOPIC_PREFIX  "homecontrol/readVersion"
 #define TOPIC_READ_LOGS      TOPIC_PREFIX  "homecontrol/readLogs"
@@ -264,6 +268,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_STATUS_CUISINE TOPIC_PREFIX  "homecontrol/cuisine_status"
 #define TOPIC_STATUS_WATERING TOPIC_PREFIX  "homecontrol/watering_status"
 #define TOPIC_STATUS_VMC                   "homecontrol/vmc_status"
+#define TOPIC_STATUS_PAC                   "homecontrol/pac_status"
 //-------------Publications pour l'appli circuit2 (carte déportée irrigation) ---
 #define SUB_GPIO0_ACTION     TOPIC_PREFIX  "circuit2/action"
 

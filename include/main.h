@@ -20,7 +20,7 @@
 #ifndef MAIN_H
 #define MAINF_H
 
-const char* version = "2026.02.09";
+const char* version = "026.02.18";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -162,6 +162,7 @@ boolean erreurPompe;
 boolean erreurPompEvent;
 boolean isLcdDisplayOn;
 
+
 boolean electricalPanelOpen;
 boolean bootDisplayOff;
 boolean vmcFast;
@@ -176,6 +177,7 @@ unsigned onVmc;
 unsigned wateringNoTimeOut;
 unsigned n_supressorFillingInTime;
 unsigned vmcLastMode;
+unsigned pacStatus;
 int vmcMode;
 char rssi_buffer[10];
 

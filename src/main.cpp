@@ -180,6 +180,12 @@
  *  - Send VMC status via mqtt in prog mode
  *  @version 2026.02.09
  *  - VMC monitoring via CO2 sensor in HA automation 
+ *  @version 2026.02.11
+ *  - Mise à jour des entitées (status VMC, FOUR, supresseur) au démarrage de HA 
+ *  @version 2026.02.13
+ *  - Update VMC monitoring via CO2 sensor in HA automation 
+ *  @version 2026.02.18
+ *  - Monitoring PAC via Home Assistant automation 
  */
 
 #include "main.h"
@@ -670,6 +676,7 @@ boolean initMQTTClient(boolean flagDisplay) {
 
   mqttClient.subscribe(TOPIC_GET_GLOBAL_SCHED);
   mqttClient.subscribe(TOPIC_WRITE_GLOBAL_SCHED);
+   mqttClient.subscribe(TOPIC_MQTT_GET_STATUS);
 //  mqttClient.subscribe(TOPIC_MQTT_TEST);
   return true;
 }
@@ -803,9 +810,13 @@ void setup() {
 #ifdef PERSISTANT_PAC
   if (!cPersistantParam->get(PAC)) {
     off(O_PAC);
+    pacStatus = PAC_STATUS_OFF;
+    mqttClient.publish(TOPIC_STATUS_PAC, S_OFF);     
   }
   else {
     on(O_PAC);
+    pacStatus = PAC_STATUS_ON;
+    mqttClient.publish(TOPIC_STATUS_PAC, S_ON);      
     t_start(tache_t_monoPacOn);
   }
 #endif  
@@ -887,6 +898,7 @@ void monoPacOff(TimerHandle_t xTimer) {
   print("Mono Arret PAC\n", OUTPUT_PRINT);
 #endif
   off(O_PAC);
+   mqttClient.publish(TOPIC_STATUS_PAC, S_OFF);
   irSendPacOff = false;
 }
 
@@ -1374,7 +1386,7 @@ boolean isEdge(int nInput) {
  * @param cmd : CMD_VMC_OFF | CMD_VMC_PROG | CMD_VMC_ON_FAST | CMD_VMC_ON
  */
 void setVmc(int cmd) {
-  // vmcMode = cmd;
+  static boolean co2LastFastMode;
 #ifdef PERSISTANT_VMC
   cPersistantParam->set(VMC, cmd);
   filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1394,21 +1406,21 @@ void setVmc(int cmd) {
       // Arrèt programmé 
       off(O_VMC);
       vmcFast = false;
-      vmcMode = VMC_PROG_OFF;
+      vmcMode = vmcLastMode = VMC_PROG_OFF;
       break;
     case 1:
       // VMC marche lente
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);      
       vmcFast = false;
-      vmcMode = VMC_PROG_ON;
+      vmcMode = vmcLastMode = VMC_PROG_ON;
       break;
     case 2:
       // VMC marche rapide
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);
       vmcFast = true;
-      vmcMode = VMC_PROG_ON_FAST;
+      vmcMode = vmcLastMode = VMC_PROG_ON_FAST;
       break;
     }
     break;
@@ -1416,7 +1428,7 @@ void setVmc(int cmd) {
     // Mode forcé VMC (hors programmation) en vitesse rapide
     // Serial.printf("SetVmc CMD_VMC_ON_FAST: %d\n", CMD_VMC_ON_FAST);
     vmcFast = true;
-    vmcMode = VMC_ON_FAST;
+    vmcMode = vmcLastMode = VMC_ON_FAST;
     on(O_VMC);
     t_start(tache_t_cmdVmcBoard);
     break;
@@ -1424,11 +1436,12 @@ void setVmc(int cmd) {
     // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
     vmcFast = false;
-    vmcMode = VMC_ON;
+    vmcMode = vmcLastMode = VMC_ON;
     t_start(tache_t_cmdVmcBoard);
     break;
   case CMD_VMC_CO2_OFF: 
     vmcMode = vmcLastMode;
+    co2LastFastMode = false;   
     switch (vmcMode) {
       case VMC_STOP:
         off(O_VMC);
@@ -1454,12 +1467,20 @@ void setVmc(int cmd) {
     }
     break; 
   case CMD_VMC_CO2_SLOW:
-  case CMD_VMC_CO2_FAST:
-    vmcLastMode = vmcMode;
-    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF) {
-      vmcFast = false;
+    if (!co2LastFastMode)
+      vmcLastMode = vmcMode;
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || VMC_ON_FAST) {
       vmcMode = VMC_ON;
+      vmcFast = false;      
       on(O_VMC);    
+      t_start(tache_t_cmdVmcBoard);
+    } 
+    break;    
+  case CMD_VMC_CO2_FAST:
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
+      vmcMode = VMC_ON_FAST;
+      vmcFast = true;
+      co2LastFastMode = true;        
       t_start(tache_t_cmdVmcBoard);
     }  
     break;       
@@ -1836,6 +1857,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       // Arrèter la PAC via IR
       // Serial.println("Arreter la PAC via IR");
       mqttClient.publish(TOPIC_PAC_IR_OFF, "");
+      mqttClient.publish(TOPIC_STATUS_PAC, S_OFF_SHUTDOWN);           
       // Couper alim PAC après DLY_OFF secondes
       t_start(tache_t_monoPacOff); // Logique inversée pour relai PAC
       t_stop(tache_t_monoPacOn);
@@ -1847,7 +1869,9 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     else {
       // mettre la PAC sous tension
       irSendPacOff = false;
-      on(O_PAC);
+      on(O_PAC);  
+      mqttClient.publish(TOPIC_STATUS_PAC, S_OFF);     
+      mqttClient.publish(TOPIC_STATUS_PAC, S_ON);       
 #ifdef PERSISTANT_PAC
       cPersistantParam->set(PAC, 1);
 #endif
@@ -1930,6 +1954,25 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     fileGlobalScheduledParam->writeFile(strPayload.c_str(), "w");
     return;
   }
+
+  //------------------  TOPIC_MQTT_GET_STATUS ----------------------
+    char buffer[4];
+    itoa(vmcMode, buffer, 10);
+    mqttClient.publish(TOPIC_STATUS_VMC, buffer); 
+    mqttClient.publish(TOPIC_STATUS_CUISINE, gpioState(O_FOUR) ? "on" : "off"); 
+    switch (pacStatus) {
+      case PAC_STATUS_OFF  : mqttClient.publish(TOPIC_STATUS_PAC, S_OFF); break; 
+      case PAC_STATUS_OFFS : mqttClient.publish(TOPIC_STATUS_PAC, S_OFF_SHUTDOWN); break;
+      case PAC_STATUS_ON   : mqttClient.publish(TOPIC_STATUS_PAC, S_ON); break;
+    }
+    if (!erreurSupresseur && !erreurPompe)
+      mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "off");
+    else if (erreurSupresseur)
+      mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on");
+    else
+      mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on2");             
+    return;
+
   //------------------  TOPIC_TEST_RESULT ----------------------
   // if (cmp(topic, TOPIC_MQTT_TEST)) {
   //   mqttConnect = true;   
