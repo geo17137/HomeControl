@@ -1477,7 +1477,7 @@ void setVmc(int cmd) {
     } 
     break;    
   case CMD_VMC_CO2_FAST:
-    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
+    if (/*vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || */vmcMode == VMC_ON) {
       vmcMode = VMC_ON_FAST;
       vmcFast = true;
       co2LastFastMode = true;        
