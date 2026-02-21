@@ -185,7 +185,9 @@
  *  @version 2026.02.13
  *  - Update VMC monitoring via CO2 sensor in HA automation 
  *  @version 2026.02.18
- *  - Monitoring PAC via Home Assistant automation 
+ *  - Monitoring PAC Home Assistant automation via 
+ *  @version 2026.02.21
+ *  - Update setVmc()
  */
 
 #include "main.h"
@@ -1386,7 +1388,7 @@ boolean isEdge(int nInput) {
  * @param cmd : CMD_VMC_OFF | CMD_VMC_PROG | CMD_VMC_ON_FAST | CMD_VMC_ON
  */
 void setVmc(int cmd) {
-  static boolean co2LastFastMode;
+  static boolean co2LastFastMode=false;
 #ifdef PERSISTANT_VMC
   cPersistantParam->set(VMC, cmd);
   filePersistantParam->writeFile(cPersistantParam->getStr(), "w");
@@ -1406,21 +1408,21 @@ void setVmc(int cmd) {
       // Arrèt programmé 
       off(O_VMC);
       vmcFast = false;
-      vmcMode = vmcLastMode = VMC_PROG_OFF;
+      vmcMode = VMC_PROG_OFF;
       break;
     case 1:
       // VMC marche lente
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);      
       vmcFast = false;
-      vmcMode = vmcLastMode = VMC_PROG_ON;
+      vmcMode = VMC_PROG_ON;
       break;
     case 2:
       // VMC marche rapide
       on(O_VMC);
       t_start(tache_t_cmdVmcBoard);
       vmcFast = true;
-      vmcMode = vmcLastMode = VMC_PROG_ON_FAST;
+      vmcMode = VMC_PROG_ON_FAST;
       break;
     }
     break;
@@ -1428,7 +1430,7 @@ void setVmc(int cmd) {
     // Mode forcé VMC (hors programmation) en vitesse rapide
     // Serial.printf("SetVmc CMD_VMC_ON_FAST: %d\n", CMD_VMC_ON_FAST);
     vmcFast = true;
-    vmcMode = vmcLastMode = VMC_ON_FAST;
+    vmcMode = VMC_ON_FAST;
     on(O_VMC);
     t_start(tache_t_cmdVmcBoard);
     break;
@@ -1436,7 +1438,7 @@ void setVmc(int cmd) {
     // Mode forcé VMC (hors programmation) en vitesse lente
     on(O_VMC);
     vmcFast = false;
-    vmcMode = vmcLastMode = VMC_ON;
+    vmcMode = VMC_ON;
     t_start(tache_t_cmdVmcBoard);
     break;
   case CMD_VMC_CO2_OFF: 
@@ -1469,7 +1471,8 @@ void setVmc(int cmd) {
   case CMD_VMC_CO2_SLOW:
     if (!co2LastFastMode)
       vmcLastMode = vmcMode;
-    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || VMC_ON_FAST) {
+    // Mettre en route la VMC que si elle est arretée
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || co2LastFastMode) {
       vmcMode = VMC_ON;
       vmcFast = false;      
       on(O_VMC);    
@@ -1477,7 +1480,9 @@ void setVmc(int cmd) {
     } 
     break;    
   case CMD_VMC_CO2_FAST:
-    if (/*vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || */vmcMode == VMC_ON) {
+    // Mettre en route la VMC en marche rapide que si elle est en marche lente
+    // ou en mode programmé marche lente
+    if (vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
       vmcMode = VMC_ON_FAST;
       vmcFast = true;
       co2LastFastMode = true;        
