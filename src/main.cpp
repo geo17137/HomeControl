@@ -189,7 +189,7 @@
  *  @version 2026.02.21
  *  - Update setVmc()
  *  @version 2026.03.03
- *  - Update setVmc()
+ *  - Optimize MQTT Trafic
  */
 
 #include "main.h"
