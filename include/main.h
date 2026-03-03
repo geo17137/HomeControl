@@ -20,7 +20,7 @@
 #ifndef MAIN_H
 #define MAINF_H
 
-const char* version = "26.02.21";
+const char* version = "26.03.03";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -162,7 +162,6 @@ boolean erreurPompe;
 boolean erreurPompEvent;
 boolean isLcdDisplayOn;
 
-
 boolean electricalPanelOpen;
 boolean bootDisplayOff;
 boolean vmcFast;
@@ -171,7 +170,9 @@ boolean supressorFillingMonoStart;
 boolean supressorFillingSecurity;
 boolean monoSurpressorSecurityStarted;
 boolean wifiConnected;
+boolean ioChange;
 
+unsigned appConnected;
 unsigned cmdVanneEst = 1;
 unsigned onVmc;
 unsigned wateringNoTimeOut;

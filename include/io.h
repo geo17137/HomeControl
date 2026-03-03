@@ -20,6 +20,7 @@
 #include "const.h"
 
 extern boolean irSendPacOff;
+extern boolean ioChange;
 unsigned readByteInput();
 boolean readBitsInput(unsigned mask);
 
@@ -87,6 +88,7 @@ inline void off(int adr) {
 #else  
   digital_write(adr, 1);
 #endif
+  ioChange = true;
 }
 /**
  * @brief Alimentation relais
@@ -101,6 +103,7 @@ inline void on(int adr) {
   digital_write(adr, 0);
 #endif
   // time_exec_stop();
+  ioChange = true;
 }
 /**
  * @brief Etat ports gpio relais (true relai fermé)

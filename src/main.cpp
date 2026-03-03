@@ -543,6 +543,23 @@ void initGpio() {
 #endif
 }
 
+void publishGpio() {
+    static char tabValue[24];
+    char str[4];
+    // unsigned arrosage = itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut);
+    // gpioRead(O_EV_ARROSAGE);
+    sprintf(tabValue, "%s;%s;%s;%u;%d;%s",
+      itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),
+      gpioRead(O_EV_IRRIGATION),
+      gpioRead(O_FOUR),
+      cmdVanneEst,
+      // gpioRead(O_EV_EST),
+      vmcMode,
+      gpioReadPac());
+      // Serial.println(tabValue);
+    mqttClient.publish(TOPIC_GPIO, tabValue);
+}
+
 /**
  * @brief Ecriture inconditionnelle des logs
  * 
@@ -678,7 +695,9 @@ boolean initMQTTClient(boolean flagDisplay) {
 
   mqttClient.subscribe(TOPIC_GET_GLOBAL_SCHED);
   mqttClient.subscribe(TOPIC_WRITE_GLOBAL_SCHED);
-   mqttClient.subscribe(TOPIC_MQTT_GET_STATUS);
+  mqttClient.subscribe(TOPIC_MQTT_GET_STATUS);
+  mqttClient.subscribe(TOPIC_APP_CONNECT);
+
 //  mqttClient.subscribe(TOPIC_MQTT_TEST);
   return true;
 }
@@ -1589,22 +1608,30 @@ void loop() {
     // Ne mettre à jour l'affichage que si changement
     // testPortIO_0() calcule la somme des bits IO en 
     // tenant compte de leur poids
-    boolean setDisplay = false;
-    unsigned uPortOut_0 = testPortIO_O();
-
-    if (uPortOut_1 != uPortOut_0) {
-      uPortOut_1 = uPortOut_0;
-      setDisplay = true;
+    if (ioChange) {
+      display();
+      if (appConnected==1) {
+        publishGpio();
+      }
+      ioChange = false;
     }
 
-    // Ne mettre à jour l'affichage que si changement
-    unsigned uPortIn_0 = testPortIO_I();
+    // boolean setDisplay = false;
+    // unsigned uPortOut_0 = testPortIO_O();
+
+    // if (uPortOut_1 != uPortOut_0) {
+    //   uPortOut_1 = uPortOut_0;
+    //   setDisplay = true;
+    // }
+
+    // // Ne mettre à jour l'affichage que si changement
+    // unsigned uPortIn_0 = testPortIO_I();
    
-    if (uPortIn_1 != uPortIn_0) {
-      uPortIn_1 = uPortIn_0;
-      setDisplay = true;
-    }
-    if (setDisplay) display();
+    // if (uPortIn_1 != uPortIn_0) {
+    //   uPortIn_1 = uPortIn_0;
+    //   setDisplay = true;
+    // }
+    // if (setDisplay) display();
   }
 
   // Scrutation évenements E/S toutes les 100 ms
@@ -1756,20 +1783,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
   }
   //------------------  TOPIC_GET_GPIO ----------------------
   if (cmp(topic, TOPIC_GET_GPIO)) {
-    static char tabValue[24];
-    char str[4];
-    // unsigned arrosage = itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut);
-    // gpioRead(O_EV_ARROSAGE);
-    sprintf(tabValue, "%s;%s;%s;%u;%d;%s",
-      itoa(digital_read(O_EV_ARROSAGE) + wateringNoTimeOut, str, 10),
-      gpioRead(O_EV_IRRIGATION),
-      gpioRead(O_FOUR),
-      cmdVanneEst,
-      // gpioRead(O_EV_EST),
-      vmcMode,
-      gpioReadPac());
-      // Serial.println(tabValue);
-    mqttClient.publish(TOPIC_GPIO, tabValue);
+    publishGpio();
     return;
   }
   //------------------  TOPIC_CMD_ARROSAGE ----------------------
@@ -1959,8 +1973,13 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     fileGlobalScheduledParam->writeFile(strPayload.c_str(), "w");
     return;
   }
-
+  //------------------  TOPIC_APP_CONNECT ----------------------
+  if (cmp(topic, TOPIC_APP_CONNECT)) {
+    appConnected = atoi(strPayload.c_str());
+    return;
+  }
   //------------------  TOPIC_MQTT_GET_STATUS ----------------------
+  if (cmp(topic, TOPIC_MQTT_GET_STATUS)) { 
     char buffer[4];
     itoa(vmcMode, buffer, 10);
     mqttClient.publish(TOPIC_STATUS_VMC, buffer); 
@@ -1977,7 +1996,7 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
     else
       mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on2");             
     return;
-
+  }
   //------------------  TOPIC_TEST_RESULT ----------------------
   // if (cmp(topic, TOPIC_MQTT_TEST)) {
   //   mqttConnect = true;   

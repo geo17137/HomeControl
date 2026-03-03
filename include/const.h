@@ -254,6 +254,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_WRITE_GLOBAL_SCHED TOPIC_PREFIX "homecontrol/global_sched_write" 
 #define TOPIC_MQTT_TEST       TOPIC_PREFIX "homecontrol/mqtt_test" 
 #define TOPIC_MQTT_GET_STATUS TOPIC_PREFIX "homecontrol/devices/get_status"
+#define TOPIC_APP_CONNECT     TOPIC_PREFIX "homecontrol/app_connect"
+
 //-------------Publications--------------------
 #define TOPIC_READ_VERSION   TOPIC_PREFIX  "homecontrol/readVersion"
 #define TOPIC_READ_LOGS      TOPIC_PREFIX  "homecontrol/readLogs"
