@@ -18,7 +18,7 @@
  */
 
 #ifndef MAIN_H
-#define MAINF_H
+#define MAIN_H
 
 const char* version = "26.03.03";
 

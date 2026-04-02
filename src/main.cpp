@@ -1607,9 +1607,6 @@ void loop() {
       lcdPrintChar((bPac) ? '0' : '1', 2, 4);
     }
 
-    // Ne mettre à jour l'affichage que si changement
-    // testPortIO_0() calcule la somme des bits IO en 
-    // tenant compte de leur poids
     if (ioChange) {
       display();
       if (appConnected==1) {
@@ -1617,6 +1614,10 @@ void loop() {
       }
       ioChange = false;
     }
+
+    // Ne mettre à jour l'affichage que si changement
+    // testPortIO_0() calcule la somme des bits IO en 
+    // tenant compte de leur poids (plus utilisé)
 
     // boolean setDisplay = false;
     // unsigned uPortOut_0 = testPortIO_O();
