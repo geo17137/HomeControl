@@ -297,9 +297,10 @@ char* readPortIo_O() {
 
 /**
  * @brief Utilisé pour détecter les changements d'état sur les ports de sortie
- *        afin de déclencher l'affichage.
+ *        afin de déclencher l'affichage. Plus utilisé
  * @return unsigned 
  */
+/*
 unsigned testPortIO_O() {
   return 
   (vmcFast) ? 2 :  ugpioRead(O_VMC) + 
@@ -310,6 +311,7 @@ unsigned testPortIO_O() {
   (ugpioRead(O_EV_IRRIGATION) << 5) +
   (ugpioRead(O_EV_EST) << 6);
 }
+*/
 
 /**
  * @brief Reads the status of three GPIO inputs and formats them into a string.
@@ -340,9 +342,11 @@ char* readPortIo_I() {
  *
  * @return An unsigned integer representing the combined state of the three GPIO pins.
  */
+/*
 unsigned testPortIO_I() {
   return ugpioRead(I_ARROSAGE) + (ugpioRead(I_IRRIGATION) << 1) + (ugpioRead(I_SURPRESSEUR) << 2);
 }
+*/
 
 inline void resetDlyDefaultDisplay() {
   t_stop(tache_t_defaultDisplay);

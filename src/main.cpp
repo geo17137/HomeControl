@@ -1593,8 +1593,8 @@ void loop() {
 
   // Scruter les ports E/S toutes les s pour les afficher sur LCD
   // Affichage uniquemment sur nouvel état des ports E/S
-  static unsigned uPortIn_1  = 0xFFFFFFFF;
-  static unsigned uPortOut_1 = 0xFFFFFFFF;
+  // static unsigned uPortIn_1  = 0xFFFFFFFF;
+  // static unsigned uPortOut_1 = 0xFFFFFFFF;
 
   if (millis() - tpsProg > INTERVAL_PORT_READ) {
     tpsProg = millis();
@@ -1607,15 +1607,21 @@ void loop() {
       lcdPrintChar((bPac) ? '0' : '1', 2, 4);
     }
 
+    // Ne mettre à jour l'affichage que si changement
+    // ioChange est mis à true dans les fonctions off(port) et on(port)
     if (ioChange) {
       display();
+      // Publication de l'état des ports GPIO sur MQTT si client connecté
       if (appConnected==1) {
         publishGpio();
       }
       ioChange = false;
     }
-
-    // Ne mettre à jour l'affichage que si changement
+    
+    // Ancienne méthode de scrutation des ports E/S,
+    // plus couteuse en temps de calcul que la méthode basée sur un flag ioChange 
+    //mis à true dans les fonctions on(port) et off(port)
+    
     // testPortIO_0() calcule la somme des bits IO en 
     // tenant compte de leur poids (plus utilisé)
 
