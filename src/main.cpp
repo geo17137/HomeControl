@@ -190,6 +190,8 @@
  *  - Update setVmc()
  *  @version 2026.03.03
  *  - Optimize MQTT Trafic
+ *  @version 2026.06.28
+ *  - Reboot automatique à 01:02 pour éviter un bug de l'ESP32 qui bloque le programme
  */
 
 #include "main.h"
@@ -423,31 +425,60 @@ FileLittleFS* initLogs(boolean force) {
  *  avec les paramètres d'heure d'été et met à jour l'horloge interne en fonction
  *  des données obtenues.
  */
+// void initTime(boolean wifiConnected) {
+//   static long gmtOffset_sec = 0, daylightOffset_sec;
+//   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
+//   if (wifiConnected) {
+//     configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
+//     struct tm timeinfo;
+//     if (getLocalTime(&timeinfo)) {
+//       rtc->setTimeStruct(timeinfo);    
+//     }
+//     // strcpy(date, getDate());
+//     // fileDateParam->writeFile(date, "w");
+//     // fileDateParam->close();
+//   }
+//   // Le module RTC conserve l'heure après reboot 
+//   // else {
+//     // Serial.println(rtc->getDateTime());
+//     // Si pas de connexion wifi, initialiser avec la date du fichier
+//     //  strcpy(date, fileDateParam->readFile().c_str());  
+//     //  setDate(date);
+//   // }
+// }
+
 void initTime(boolean wifiConnected) {
   static long gmtOffset_sec = 0, daylightOffset_sec;
   rtc = new ESP32Time(cDlyParam->get(SUMMER_TIME) * 3600);
+
   if (wifiConnected) {
-    configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
-    struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
-      rtc->setTimeStruct(timeinfo);    
+    configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org",
+               "time.google.com");   // serveur de fallback
+
+    struct tm timeinfo = {};         // ← init à zéro explicite
+    
+    // Attendre une réponse NTP valide — jusqu'à 10 tentatives
+    int retry = 0;
+    const int maxRetry = 10;
+    while (!getLocalTime(&timeinfo, 2000) && retry < maxRetry) {
+      Serial.printf("[NTP] Attente sync... (%d/%d)\n", ++retry, maxRetry);
     }
-    // strcpy(date, getDate());
-    // fileDateParam->writeFile(date, "w");
-    // fileDateParam->close();
+
+    // Vérification de cohérence avant d'appliquer
+    if (timeinfo.tm_year > 100 &&      // > an 2000 (tm_year = année - 1900)
+        timeinfo.tm_year < 200) {      // < an 2100
+      rtc->setTimeStruct(timeinfo);
+      Serial.printf("[NTP] Heure sync : %s\n", getDate());
+    } else {
+      Serial.printf("[NTP] Heure invalide ignorée (tm_year=%d)\n",
+                    timeinfo.tm_year);
+    }
   }
-  // Le module RTC conserve l'heure après reboot 
-  // else {
-    // Serial.println(rtc->getDateTime());
-    // Si pas de connexion wifi, initialiser avec la date du fichier
-    //  strcpy(date, fileDateParam->readFile().c_str());  
-    //  setDate(date);
-  // }
 }
 
 const char* getDate() {
   static char date[80];
-  sprintf(date, "%02d/%02d/%4d %02d:%02d:%02d",
+  sprintf(date, "%02d/%02d/%04d %02d:%02d:%02d",
     rtc->getDay(),
     rtc->getMonth() + 1,
     rtc->getYear(),
@@ -456,6 +487,17 @@ const char* getDate() {
     rtc->getSecond());
   return date;
 }
+
+// Ne retourne plus un pointeur sur static interne
+// void getDate(char* buf, size_t len) {
+//   snprintf(buf, len, "%02d/%02d/%04d %02d:%02d:%02d",
+//     rtc->getDay(),
+//     rtc->getMonth() + 1,
+//     rtc->getYear(),
+//     rtc->getHour(true),
+//     rtc->getMinute(),
+//     rtc->getSecond());
+// }
 
 void setDate(char* date) {
   int day, month, year, hour, minute, second; 
@@ -1114,6 +1156,7 @@ void schedule() {
 #ifndef TIME_SIMULATOR
   int h = rtc->getHour(true); // true -> format 24H
   int m = rtc->getMinute();
+
   // Mise à jour du jours courant (persistant) utilisé par circuit secondaire irrigation
   if (h == 0 && !flagJours) {
     flagJours = true;
@@ -1137,6 +1180,9 @@ void schedule() {
   // Serial.println(ESP.getHeapSize());
   Serial.printf("%02d:%02d\r", h, m);
 #endif
+  // Reboot automatique à 01:02 pour éviter un bug de l'ESP32 qui bloque le programme
+  if (h == 1 && m == 0)
+    ESP.restart();
 
   for (int deviceId = 0; deviceId < N_DEVICES; deviceId++) {
     // Programmation autorisée pour ce device ?
