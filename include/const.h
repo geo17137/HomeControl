@@ -118,13 +118,16 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 //--------------------------
 // Modes de commande VMC
 //--------------------------
-#define CMD_VMC_OFF       0
-#define CMD_VMC_PROG      1
-#define CMD_VMC_FAST      2
-#define CMD_VMC_SLOW      3
-#define CMD_VMC_CO2_OFF   4
-#define CMD_VMC_CO2_SLOW  5
-#define CMD_VMC_CO2_FAST  6
+#define CMD_VMC_OFF          0
+#define CMD_VMC_PROG         1
+#define CMD_VMC_FAST         2
+#define CMD_VMC_SLOW         3
+#define CMD_VMC_CO2_OFF      4
+#define CMD_VMC_CO2_SLOW     5
+#define CMD_VMC_CO2_FAST     6
+#define CMD_VMC_TOILET_OFF   7
+#define CMD_VMC_TOILET_SLOW  8
+#define CMD_VMC_TOILET_FAST  9
 
 // CMD_VMC_PROG a deux sous modes 1 slow, 2 fast (VMC_FAST_PROG)
 // placés dans le champ auto de param (pour la VMC)

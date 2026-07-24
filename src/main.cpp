@@ -188,7 +188,8 @@
  *  - Monitoring PAC Home Assistant automation via 
  *  @version 2026.02.21
  *  - Update setVmc()
- */
+ *  @version 2026.07.24
+ *  - Update setVmc() */
 
 #include "main.h"
 #include "io.h"
@@ -1480,6 +1481,53 @@ void setVmc(int cmd) {
     } 
     break;    
   case CMD_VMC_CO2_FAST:
+    // Mettre en route la VMC en marche rapide que si elle est en marche lente
+    // ou en mode programmé marche lente
+    if (vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
+      vmcMode = VMC_ON_FAST;
+      vmcFast = true;
+      co2LastFastMode = true;        
+      t_start(tache_t_cmdVmcBoard);
+    }  
+  case CMD_VMC_TOILET_OFF: 
+    vmcMode = vmcLastMode;
+    co2LastFastMode = false;   
+    switch (vmcMode) {
+      case VMC_STOP:
+        off(O_VMC);
+        break;
+      case VMC_ON:
+        break;  
+      case VMC_ON_FAST:
+        vmcFast = false;
+        t_start(tache_t_cmdVmcBoard);
+        break; 
+      case VMC_PROG_OFF:
+        off(O_VMC);
+        vmcFast = false;
+        break;
+      case VMC_PROG_ON:
+        t_start(tache_t_cmdVmcBoard);      
+        vmcFast = false;
+        break;          
+      case VMC_PROG_ON_FAST:
+        t_start(tache_t_cmdVmcBoard);      
+        vmcFast = true;
+        break;           
+    }
+    break; 
+  case CMD_VMC_TOILET_SLOW:
+    if (!co2LastFastMode)
+      vmcLastMode = vmcMode;
+    // Mettre en route la VMC que si elle est arretée
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF || co2LastFastMode) {
+      vmcMode = VMC_ON;
+      vmcFast = false;      
+      on(O_VMC);    
+      t_start(tache_t_cmdVmcBoard);
+    } 
+    break;    
+  case CMD_VMC_TOILET_FAST:
     // Mettre en route la VMC en marche rapide que si elle est en marche lente
     // ou en mode programmé marche lente
     if (vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
