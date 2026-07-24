@@ -189,7 +189,8 @@
  *  @version 2026.02.21
  *  - Update setVmc()
  *  @version 2026.07.24
- *  - Update setVmc() */
+ *  - Update setVmc(), - Reboot automatique à 01:01 pour éviter un bug de l'ESP32 qui bloque le programme   
+ * */
 
 #include "main.h"
 #include "io.h"
@@ -1117,6 +1118,9 @@ void schedule() {
   // Serial.println(ESP.getHeapSize());
   Serial.printf("%02d:%02d\r", h, m);
 #endif
+  // Reboot automatique à 01:01 pour éviter un bug de l'ESP32 qui bloque le programme
+  if (h == 1 && m == 1)
+    ESP.restart();
 
   for (int deviceId = 0; deviceId < N_DEVICES; deviceId++) {
     // Programmation autorisée pour ce device ?
