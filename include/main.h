@@ -18,9 +18,9 @@
  */
 
 #ifndef MAIN_H
-#define MAINF_H
+#define MAIN_H
 
-const char* version = "26.07.24";
+const char* version = "26.03.03";
 
 // Definitions for print modes
 #define WEB_PRINT false
@@ -162,7 +162,6 @@ boolean erreurPompe;
 boolean erreurPompEvent;
 boolean isLcdDisplayOn;
 
-
 boolean electricalPanelOpen;
 boolean bootDisplayOff;
 boolean vmcFast;
@@ -171,7 +170,9 @@ boolean supressorFillingMonoStart;
 boolean supressorFillingSecurity;
 boolean monoSurpressorSecurityStarted;
 boolean wifiConnected;
+boolean ioChange;
 
+unsigned appConnected;
 unsigned cmdVanneEst = 1;
 unsigned onVmc;
 unsigned wateringNoTimeOut;
@@ -245,8 +246,8 @@ void schedule();
 extern void _ioDisplay();
 // extern char* readPortIo_O();
 // extern char* readPortIo_I();
-extern unsigned testPortIO_O();
-extern unsigned testPortIO_I();
+// extern unsigned testPortIO_O();
+// extern unsigned testPortIO_I();
 // extern void ioDisplay();
 extern void initDisplay();
 extern void addDevices();
