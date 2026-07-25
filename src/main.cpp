@@ -190,8 +190,10 @@
  *  - Update setVmc()
  *  @version 2026.03.03
  *  - Optimize MQTT Trafic
-  *  @version 2026.07.24
+ *  @version 2026.07.24
  *  - Optimize Automatic reboot at 01:00, update setVmc
+ *  @version 2026.07.25
+ *  - Update display strategy
  */
 
 #include "main.h"
@@ -1645,7 +1647,6 @@ void loop() {
   }
 
   // Scruter les ports E/S toutes les s pour les afficher sur LCD
-  // Affichage uniquemment sur nouvel état des ports E/S
   // static unsigned uPortIn_1  = 0xFFFFFFFF;
   // static unsigned uPortOut_1 = 0xFFFFFFFF;
 
@@ -1662,13 +1663,17 @@ void loop() {
 
     // Ne mettre à jour l'affichage que si changement
     // ioChange est mis à true dans les fonctions off(port) et on(port)
-    if (ioChange) {
+    if (ioChange) { 
+      static unsigned countUpdate = 15;
       display();
       // Publication de l'état des ports GPIO sur MQTT si client connecté
       if (appConnected==1) {
         publishGpio();
       }
-      ioChange = false;
+      if (countUpdate-- == 0) {
+        ioChange = false;
+        countUpdate = 15;
+      }
     }
     
     // Ancienne méthode de scrutation des ports E/S,
