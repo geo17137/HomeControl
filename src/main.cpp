@@ -194,6 +194,8 @@
  *  - Optimize Automatic reboot at 01:00, update setVmc
  *  @version 2026.07.25
  *  - Update display strategy
+ *  @version 2026.07.25
+ *  - Update display strategy 
  */
 
 #include "main.h"
@@ -925,7 +927,7 @@ void monoPacOff(TimerHandle_t xTimer) {
   print("Mono Arret PAC\n", OUTPUT_PRINT);
 #endif
   off(O_PAC);
-   mqttClient.publish(TOPIC_STATUS_PAC, S_OFF);
+  mqttClient.publish(TOPIC_STATUS_PAC, S_OFF);
   irSendPacOff = false;
 }
 
@@ -1664,17 +1666,13 @@ void loop() {
     // Ne mettre à jour l'affichage que si changement
     // ioChange est mis à true dans les fonctions off(port) et on(port)
     if (ioChange) { 
-      static unsigned countUpdate = 15;
       display();
       // Publication de l'état des ports GPIO sur MQTT si client connecté
       if (appConnected==1) {
         publishGpio();
       }
-      if (countUpdate-- == 0) {
-        ioChange = false;
-        countUpdate = 15;
-      }
-    }
+      ioChange = false;
+    }  
     
     // Ancienne méthode de scrutation des ports E/S,
     // plus couteuse en temps de calcul que la méthode basée sur un flag ioChange 
@@ -1948,6 +1946,8 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       t_start(tache_t_monoPacOff); // Logique inversée pour relai PAC
       t_stop(tache_t_monoPacOn);
       irSendPacOff = true;
+      // Mettre à jour l'affichage sur l'appli
+      ioChange = true;
 #ifdef PERSISTANT_PAC
       cPersistantParam->set(PAC, 0);
 #endif
