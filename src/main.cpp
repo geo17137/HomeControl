@@ -192,10 +192,12 @@
  *  - Optimize MQTT Trafic
  *  @version 2026.07.24
  *  - Optimize Automatic reboot at 01:00, update setVmc
- *  @version 2026.07.25
+ *  @version 2026.07.26
  *  - Update display strategy
- *  @version 2026.07.25
+ *  @version 2026.07.26
  *  - Update display strategy 
+ *  @version 2026.08.26
+ *  - Update serVmc  
  */
 
 #include "main.h"
@@ -1560,10 +1562,12 @@ void setVmc(int cmd) {
   case CMD_VMC_TOILET_FAST:
     // Mettre en route la VMC en marche rapide que si elle est en marche lente
     // ou en mode programmé marche lente
-    if (vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
+    if (vmcMode==VMC_STOP || vmcMode==VMC_PROG_OFF) {    
+    //if (vmcMode==VMC_PROG_OFF || vmcMode == VMC_ON) {
       vmcMode = VMC_ON_FAST;
       vmcFast = true;
-      co2LastFastMode = true;        
+      co2LastFastMode = true;  
+      on(O_VMC);        
       t_start(tache_t_cmdVmcBoard);
     }  
     break;        
