@@ -87,6 +87,23 @@ void arrosage() {
   stopWatering();
 }
 
+void garage() {
+  mqttClient.publish(TOPIC_OPEN_CLOSE, "1");
+}
+
+void irrigation() {
+  if (_state)  
+    startTankFilling();
+  else
+    stopTankFilling();  
+} 
+
+void arrose_citrons() {
+  if (_state)  
+    onVanneEst();
+  else
+    offVanneEst();  
+}
 
 void addDevices() {
   // Ne pas modifier l'ordre
@@ -94,6 +111,9 @@ void addDevices() {
   fauxmo.addDevice(S_VMC);
   fauxmo.addDevice(S_LANCE_ARROSAGE);
   fauxmo.addDevice(S_CLIM);
+  fauxmo.addDevice(S_GARAGE);  
+  fauxmo.addDevice(S_IRRIGATION);
+  fauxmo.addDevice(S_CITRON);
 // fauxmo.addDevice(S_PAC_TEMP);
 
   fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {

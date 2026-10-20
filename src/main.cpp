@@ -198,6 +198,8 @@
  *  - Update display strategy 
  *  @version 2026.08.26
  *  - Update serVmc  
+ *  @version 2026.10.20
+ *  - Add Alexa commands : Garage, Irrigation, Arrosage citrons  
  */
 
 #include "main.h"

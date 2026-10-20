@@ -287,6 +287,9 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 //-------------Publications pour l'appli VmcCmd (carte déportée command marche rapide vmc)
 #define VMC_BOARD_ACTION  TOPIC_PREFIX "vmc_board/action"
 
+//-------------Publications pour l'appli GarageEsp8266_V2 -------------------
+#define TOPIC_OPEN_CLOSE TOPIC_PREFIX "garage/openClose"
+
 // Time out watch dog (ms)
 #define WDT_TIMEOUT 100
 
@@ -378,7 +381,7 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define PERSISTANT_POWER_COOK 
 #define PERSISTANT_PAC        
 #define PERSISTANT_VMC 
-#define PERSISTANT_VANNE_EST  
+//#define PERSISTANT_VANNE_EST  
 // Non encore implémenté
 // #define PERSISTANT_IRRIGATION 
 
