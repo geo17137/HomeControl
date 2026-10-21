@@ -89,10 +89,12 @@ void arrosage() {
 
 void garage() {    
   if (_state && garageStatus == GARAGE_CLOSE)  {
+    //Serial.println("1. mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, \"1\")");
     mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, "1");
     return;
   }
   if (!_state && (garageStatus == GARAGE_OPEN || garageStatus == GARAGE_NOT_CLOSE))  {
+    // Serial.println("2. mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, \"1\")");
     mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, "1");
     return;
   }    

@@ -205,6 +205,13 @@
 #include "main.h"
 #include "io.h"
 
+#ifdef FORCE_IP
+IPAddress local_IP(192, 168, 1, 219);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+IPAddress primaryDNS(8, 8, 8, 8);
+#endif
+
 #ifdef WEB_SERIAL
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -623,6 +630,11 @@ void initWifiStation() {
 boolean initWifiStation(boolean flagDisplay) {
   char buffer[32];
   int i=0;
+#ifdef FORCE_IP  
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS)) {
+    Serial.println("Échec de la configuration IP statique !");
+  }
+#endif  
   WiFiClass::setHostname(hostname);  
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);

@@ -35,6 +35,7 @@
 // #define WEB_SERIAL
 // #define DEBUG_HEAP
 // #define DEBUG_TOPIC
+// #define FORCE_IP
 //------------------------
 
 #define FORCE_INIT_PARAM false  
