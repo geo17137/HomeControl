@@ -200,6 +200,8 @@
  *  - Update serVmc  
  *  @version 2026.10.20
  *  - Add Alexa commands : Garage, Irrigation, Arrosage citrons  
+ *  @version 2026.10.21
+ *  - Update Alexa commands, add static ip addr for debug 
  */
 
 #include "main.h"
