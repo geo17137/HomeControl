@@ -87,8 +87,15 @@ void arrosage() {
   stopWatering();
 }
 
-void garage() {
-  mqttClient.publish(TOPIC_OPEN_CLOSE, "1");
+void garage() {    
+  if (_state && garageStatus == GARAGE_CLOSE)  {
+    mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, "1");
+    return;
+  }
+  if (!_state && (garageStatus == GARAGE_OPEN || garageStatus == GARAGE_NOT_CLOSE))  {
+    mqttClient.publish(TOPIC_GARAGE_OPEN_CLOSE, "1");
+    return;
+  }    
 }
 
 void irrigation() {

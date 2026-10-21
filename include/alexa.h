@@ -30,7 +30,7 @@ extern SimpleParam* cPersistantParam;
 extern FileLittleFS* filePersistantParam;
 extern TACHE_T tache_t_monoPacOn;
 extern TACHE_T tache_t_monoPacOff;
-
+extern unsigned garageStatus;
 boolean _state;
 unsigned char _value;
 

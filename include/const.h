@@ -258,6 +258,8 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define TOPIC_MQTT_TEST       TOPIC_PREFIX "homecontrol/mqtt_test" 
 #define TOPIC_MQTT_GET_STATUS TOPIC_PREFIX "homecontrol/devices/get_status"
 #define TOPIC_APP_CONNECT     TOPIC_PREFIX "homecontrol/app_connect"
+#define TOPIC_APP_CONNECT     TOPIC_PREFIX "homecontrol/app_connect"
+
 
 //-------------Publications--------------------
 #define TOPIC_READ_VERSION   TOPIC_PREFIX  "homecontrol/readVersion"
@@ -288,7 +290,10 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define VMC_BOARD_ACTION  TOPIC_PREFIX "vmc_board/action"
 
 //-------------Publications pour l'appli GarageEsp8266_V2 -------------------
-#define TOPIC_OPEN_CLOSE TOPIC_PREFIX "garage/openClose"
+#define TOPIC_GARAGE_OPEN_CLOSE TOPIC_PREFIX "garage/openClose"
+#define TOPIC_GARAGE_GET_STATUS TOPIC_PREFIX "garage/statusGet"
+//-------------Abonnement pour l'appli GarageEsp8266_V2 -------------------
+#define TOPIC_GARAGE_STATUS     TOPIC_PREFIX "garage/status"
 
 // Time out watch dog (ms)
 #define WDT_TIMEOUT 100
@@ -306,6 +311,12 @@ const int MAX_PAS_PERIODE_DEBIT = (PERIODE_DEBIT / PAS_PERIODE_DEBIT);
 #define FILE_PERSISTANT_DEVICE "/persistant.txt"
 // Fichier date
 #define FILE_DATE "/date.txt"
+// Constante position porte garage
+#define GARAGE_CLOSE      1
+#define GARAGE_OPEN       2
+#define GARAGE_NOT_CLOSE  3
+#define GARAGE_UNDEFINED  0
+
 
 
 // Contenu du fichier DLY_PARAM_FILE_NAME (valeurs par défaut)

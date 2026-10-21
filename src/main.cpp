@@ -710,6 +710,7 @@ boolean initMQTTClient(boolean flagDisplay) {
   mqttClient.subscribe(TOPIC_MQTT_GET_STATUS);
   mqttClient.subscribe(TOPIC_APP_CONNECT);
 
+  mqttClient.subscribe(TOPIC_GARAGE_STATUS);
 //  mqttClient.subscribe(TOPIC_MQTT_TEST);
   return true;
 }
@@ -888,6 +889,7 @@ void setup() {
   initAlexa();
   addDevices();
   Serial.println("Alexa command");
+  mqttClient.publish(TOPIC_GARAGE_GET_STATUS, "");
 #endif  
   Serial.println("End setup");
 }
@@ -2070,6 +2072,23 @@ void PubSubCallback(char* topic, byte* payload, unsigned int length) {
       mqttClient.publish(TOPIC_DEFAUT_SUPRESSOR, "on2");             
     return;
   }
+  //------------------  TOPIC_GARAGE_STATUS ----------------------
+  if (cmp(topic, TOPIC_GARAGE_STATUS)) {
+    if (strPayload == "closed") {
+      garageStatus = GARAGE_CLOSE;
+      return;
+    }
+    if (strPayload == "open") {
+      garageStatus = GARAGE_OPEN;
+      return;
+    }  
+    if (strPayload == "notOpenClose") {
+      garageStatus = GARAGE_NOT_CLOSE;
+      return;
+    } 
+    return;
+  }
+
   //------------------  TOPIC_TEST_RESULT ----------------------
   // if (cmp(topic, TOPIC_MQTT_TEST)) {
   //   mqttConnect = true;   

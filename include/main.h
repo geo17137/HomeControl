@@ -179,6 +179,8 @@ unsigned wateringNoTimeOut;
 unsigned n_supressorFillingInTime;
 unsigned vmcLastMode;
 unsigned pacStatus;
+unsigned garageStatus; // 0 Etat non déterminé
+
 int vmcMode;
 char rssi_buffer[10];
 
