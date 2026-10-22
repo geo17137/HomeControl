@@ -663,6 +663,10 @@ boolean initWifiStation(boolean flagDisplay) {
     Serial.println(buffer);
     lcdPrintString(buffer, 2, 0, true);
   }
+  if (!MDNS.begin(hostname)) {
+    Serial.println("Erreur : Impossible de démarrer le service mDNS !");
+  }
+  // MDNS.addService("http", "tcp", 80);
   return true;
 }
 #endif

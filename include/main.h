@@ -32,6 +32,7 @@ const char* version = "26.10.21";
 #include <string>
 #include "const.h"
 #include <WiFiUdp.h>
+#include <ESPmDNS.h>
 #ifdef WIFI_MANAGER
 #include <WiFiManager.h>
 #endif
